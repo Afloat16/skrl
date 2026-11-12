@@ -62,7 +62,7 @@ def compute_gae(
     # returns computation
     returns = advantages + values
     # normalize advantages
-    advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+    advantages = (advantages - advantages.mean()) / (advantages.std(unbiased=advantages.numel() > 1) + 1e-8)
 
     return returns, advantages
 
