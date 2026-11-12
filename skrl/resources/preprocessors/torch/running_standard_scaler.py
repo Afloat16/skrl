@@ -87,11 +87,9 @@ class RunningStandardScaler(nn.Module):
 
         # scale back the data to the original representation
         if inverse:
-            return (
-                torch.sqrt(self.running_variance.float())
-                * torch.clamp(x, min=-self.clip_threshold, max=self.clip_threshold)
-                + self.running_mean.float()
-            )
+            return (torch.sqrt(self.running_variance.float()) + self.epsilon) * torch.clamp(
+                x, min=-self.clip_threshold, max=self.clip_threshold
+            ) + self.running_mean.float()
         # standardization by centering and scaling
         return torch.clamp(
             (x - self.running_mean.float()) / (torch.sqrt(self.running_variance.float()) + self.epsilon),

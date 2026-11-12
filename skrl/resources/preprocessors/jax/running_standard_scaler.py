@@ -46,8 +46,10 @@ def _parallel_variance(
 
 
 @jax.jit
-def _inverse(running_mean: Tensor, running_variance: Tensor, clip_threshold: float, array: Tensor) -> Tensor:
-    return jnp.sqrt(running_variance) * jnp.clip(array, -clip_threshold, clip_threshold) + running_mean
+def _inverse(
+    running_mean: Tensor, running_variance: Tensor, clip_threshold: float, epsilon: float, array: Tensor
+) -> Tensor:
+    return (jnp.sqrt(running_variance) + epsilon) * jnp.clip(array, -clip_threshold, clip_threshold) + running_mean
 
 
 @jax.jit
@@ -175,6 +177,6 @@ class RunningStandardScaler:
 
         # scale back the data to the original representation
         if inverse:
-            return _inverse(self.running_mean, self.running_variance, self.clip_threshold, x)
+            return _inverse(self.running_mean, self.running_variance, self.clip_threshold, self.epsilon, x)
         # standardization by centering and scaling
         return _standardization(self.running_mean, self.running_variance, self.clip_threshold, self.epsilon, x)

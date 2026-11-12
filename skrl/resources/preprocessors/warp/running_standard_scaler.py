@@ -18,10 +18,13 @@ def _inverse_2d(
     running_mean: wp.array1d[Any],
     running_variance: wp.array1d[Any],
     clip_threshold: float,
+    epsilon: float,
     dst: wp.array2d[Any],
 ):
     i, j = wp.tid()
-    dst[i, j] = wp.sqrt(running_variance[j]) * wp.clamp(src[i, j], -clip_threshold, clip_threshold) + running_mean[j]
+    dst[i, j] = (wp.sqrt(running_variance[j]) + epsilon) * wp.clamp(
+        src[i, j], -clip_threshold, clip_threshold
+    ) + running_mean[j]
 
 
 @wp.kernel(enable_backward=False)
@@ -30,12 +33,13 @@ def _inverse_3d(
     running_mean: wp.array1d[Any],
     running_variance: wp.array1d[Any],
     clip_threshold: float,
+    epsilon: float,
     dst: wp.array3d[Any],
 ):
     i, j, k = wp.tid()
-    dst[i, j, k] = (
-        wp.sqrt(running_variance[k]) * wp.clamp(src[i, j, k], -clip_threshold, clip_threshold) + running_mean[k]
-    )
+    dst[i, j, k] = (wp.sqrt(running_variance[k]) + epsilon) * wp.clamp(
+        src[i, j, k], -clip_threshold, clip_threshold
+    ) + running_mean[k]
 
 
 @wp.kernel(enable_backward=False)
@@ -248,7 +252,7 @@ class RunningStandardScaler:
             wp.launch(
                 _inverse_2d if ndim == 2 else _inverse_3d,
                 dim=x.shape,
-                inputs=[x, self.running_mean, self.running_variance, self.clip_threshold],
+                inputs=[x, self.running_mean, self.running_variance, self.clip_threshold, self.epsilon],
                 outputs=[output],
                 device=self.device,
             )
