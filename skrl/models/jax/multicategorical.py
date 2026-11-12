@@ -119,8 +119,9 @@ class MultiCategoricalMixin:
 
         # compute actions and log_prob
         actions, log_prob = [], []
-        for _net_output, _taken_actions in zip(net_outputs, taken_actions):
-            _actions, _log_prob = _categorical(_net_output, self._mc_unnormalized_log_prob, _taken_actions, subkey)
+        head_keys = jax.random.split(subkey, self._mc_action_space_shape)
+        for _net_output, _taken_actions, head_key in zip(net_outputs, taken_actions, head_keys):
+            _actions, _log_prob = _categorical(_net_output, self._mc_unnormalized_log_prob, _taken_actions, head_key)
             actions.append(_actions)
             log_prob.append(_log_prob)
 
