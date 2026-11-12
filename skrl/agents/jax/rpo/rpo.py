@@ -84,7 +84,9 @@ def _update_policy(
         # compute entropy loss
         entropy_loss = 0
         if entropy_loss_scale:
-            entropy_loss = -entropy_loss_scale * get_entropy(outputs["stddev"], role="policy").mean()
+            entropy_loss = (
+                -entropy_loss_scale * get_entropy(outputs.get("entropy_input", outputs["stddev"]), role="policy").mean()
+            )
 
         return policy_loss + entropy_loss, (policy_loss, entropy_loss, kl_divergence, outputs["stddev"])
 

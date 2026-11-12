@@ -36,12 +36,17 @@ def _categorical(net_output, unnormalized_log_prob, taken_actions, key):
     return actions.reshape(-1, 1), log_prob.reshape(-1, 1)
 
 
-@jax.jit
-def _entropy(logits):
-    logits = logits - jax.scipy.special.logsumexp(logits, axis=-1, keepdims=True)
+@partial(jax.jit, static_argnames=("unnormalized_log_prob",))
+def _entropy(net_output, unnormalized_log_prob=True):
+    if unnormalized_log_prob:
+        logits = net_output - jax.scipy.special.logsumexp(net_output, axis=-1, keepdims=True)
+        probabilities = jax.nn.softmax(logits)
+    else:
+        probabilities = net_output / net_output.sum(-1, keepdims=True)
+        eps = jnp.finfo(probabilities.dtype).eps
+        logits = jnp.log(probabilities.clip(min=eps, max=1 - eps))
     logits = logits.clip(min=jnp.finfo(logits.dtype).min)
-    p_log_p = logits * jax.nn.softmax(logits)
-    return -p_log_p.sum(-1, keepdims=True)
+    return -(logits * probabilities).sum(-1, keepdims=True)
 
 
 class MultiCategoricalMixin:
@@ -101,6 +106,7 @@ class MultiCategoricalMixin:
 
             - ``"log_prob"``: log of the probability density function.
             - ``"net_output"``: network output.
+            - ``"entropy_input"``: distribution parameters to pass to :meth:`get_entropy`.
         """
         with jax.default_device(self.device):
             self._mc_i += 1
@@ -134,6 +140,7 @@ class MultiCategoricalMixin:
 
         outputs["log_prob"] = log_prob
         outputs["net_output"] = net_output
+        outputs["entropy_input"] = net_output
         # avoid jax.errors.UnexpectedTracerError
         outputs["stddev"] = jnp.full_like(log_prob, jnp.nan)
         return actions, outputs
@@ -141,9 +148,19 @@ class MultiCategoricalMixin:
     def get_entropy(self, stddev: Tensor, *, role: str = "") -> Tensor:
         """Compute and return the entropy of the model.
 
-        :param stddev: Model standard deviation.
+        :param stddev: Distribution parameters from the ``"entropy_input"`` model output
+            (logits or probabilities).
         :param role: Role played by the model.
 
         :return: Entropy of the model.
         """
-        return _entropy(stddev)
+        entropy = jnp.concatenate(
+            [
+                _entropy(head, self._mc_unnormalized_log_prob)
+                for head in jnp.split(stddev, self._mc_action_space_nvec[:-1], axis=-1)
+            ],
+            axis=-1,
+        )
+        if self._mc_reduction is not None:
+            return self._mc_reduction(entropy, axis=-1, keepdims=True)
+        return entropy

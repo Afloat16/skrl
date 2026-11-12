@@ -115,7 +115,7 @@ def test_categorical_model(capsys, device):
             output = model.act(_sample_inputs(token, input_space, device))
             assert len(output) == 2
             assert output[0].shape == (10, 1)
-            entropy = model.get_entropy(output[1]["stddev"])
+            entropy = model.get_entropy(output[1]["entropy_input"])
             assert entropy.shape == (10, 1)
 
 
@@ -142,7 +142,7 @@ def test_multicategorical_model(capsys, device):
             output = model.act(_sample_inputs(token, input_space, device))
             assert len(output) == 2
             assert output[0].shape == (10, 2)
-            entropy = model.get_entropy(output[1]["stddev"])
+            entropy = model.get_entropy(output[1]["entropy_input"])
             assert entropy.shape == (10, 1)
 
 
