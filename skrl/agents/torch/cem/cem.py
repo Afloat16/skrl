@@ -197,16 +197,11 @@ class CEM(Agent):
             )
 
             # track episodes internally
-            if self._rollout:
-                indexes = torch.nonzero(terminated + truncated)
-                if indexes.numel():
-                    for i in indexes[:, 0]:
-                        try:
-                            self._episode_tracking[i.item()].append(self._rollout + 1)
-                        except IndexError:
-                            logger.warning(f"IndexError: {i.item()}")
-            else:
-                self._episode_tracking = [[0] for _ in range(rewards.size(-1))]
+            if not self._rollout:
+                self._episode_tracking = [[0] for _ in range(rewards.size(0))]
+            indexes = torch.nonzero(terminated + truncated)
+            for i in indexes[:, 0]:
+                self._episode_tracking[i.item()].append(self._rollout + 1)
 
     def pre_interaction(self, *, timestep: int, timesteps: int) -> None:
         """Method called before the interaction with the environment.
@@ -253,15 +248,16 @@ class CEM(Agent):
             # compute discounted return threshold
             limits = []
             returns = []
-            for e in range(sampled_rewards.size(-1)):
-                for i, j in zip(self._episode_tracking[e][:-1], self._episode_tracking[e][1:]):
-                    limits.append([e + i, e + j])
-                    rewards = sampled_rewards[e + i : e + j]
+            for e, boundaries in enumerate(self._episode_tracking):
+                for i, j in zip(boundaries[:-1], boundaries[1:]):
+                    episode = slice(e + i * self.memory.num_envs, e + j * self.memory.num_envs, self.memory.num_envs)
+                    limits.append(episode)
+                    rewards = sampled_rewards[episode]
                     returns.append(
                         torch.sum(
                             rewards
                             * self.cfg.discount_factor
-                            ** torch.arange(rewards.size(0), device=rewards.device).flip(-1).view(rewards.size())
+                            ** torch.arange(rewards.size(0), device=rewards.device).view(rewards.size())
                         )
                     )
 
@@ -269,19 +265,17 @@ class CEM(Agent):
                 logger.warning("No returns to update. Consider increasing the number of rollouts")
                 return
 
-            returns = torch.tensor(returns)
+            returns = torch.stack(returns)
             return_threshold = torch.quantile(returns, self.cfg.percentile, dim=-1)
 
             # get elite observations/states and actions
             indexes = torch.nonzero(returns >= return_threshold)
-            elite_observations = torch.cat(
-                [sampled_observations[limits[i][0] : limits[i][1]] for i in indexes[:, 0]], dim=0
-            )
+            elite_observations = torch.cat([sampled_observations[limits[i]] for i in indexes[:, 0]], dim=0)
             try:
-                elite_states = torch.cat([sampled_states[limits[i][0] : limits[i][1]] for i in indexes[:, 0]], dim=0)
+                elite_states = torch.cat([sampled_states[limits[i]] for i in indexes[:, 0]], dim=0)
             except TypeError:
                 elite_states = None
-            elite_actions = torch.cat([sampled_actions[limits[i][0] : limits[i][1]] for i in indexes[:, 0]], dim=0)
+            elite_actions = torch.cat([sampled_actions[limits[i]] for i in indexes[:, 0]], dim=0)
 
         with torch.autocast(device_type=self._device_type, enabled=self.cfg.mixed_precision):
 

@@ -217,16 +217,11 @@ class CEM(Agent):
             )
 
             # track episodes internally
-            if self._rollout:
-                indexes = (terminated + truncated).nonzero()[0]
-                if indexes.size:
-                    for i in indexes:
-                        try:
-                            self._episode_tracking[i.item()].append(self._rollout + 1)
-                        except IndexError:
-                            logger.warning(f"IndexError: {i.item()}")
-            else:
-                self._episode_tracking = [[0] for _ in range(rewards.shape[-1])]
+            if not self._rollout:
+                self._episode_tracking = [[0] for _ in range(rewards.shape[0])]
+            indexes = (terminated + truncated).nonzero()[0]
+            for i in indexes:
+                self._episode_tracking[i.item()].append(self._rollout + 1)
 
     def pre_interaction(self, *, timestep: int, timesteps: int) -> None:
         """Method called before the interaction with the environment.
@@ -277,16 +272,13 @@ class CEM(Agent):
         # compute discounted return threshold
         limits = []
         returns = []
-        for e in range(sampled_rewards.shape[-1]):
-            for i, j in zip(self._episode_tracking[e][:-1], self._episode_tracking[e][1:]):
-                limits.append([e + i, e + j])
-                rewards = sampled_rewards[e + i : e + j]
+        for e, boundaries in enumerate(self._episode_tracking):
+            for i, j in zip(boundaries[:-1], boundaries[1:]):
+                episode = slice(e + i * self.memory.num_envs, e + j * self.memory.num_envs, self.memory.num_envs)
+                limits.append(episode)
+                rewards = sampled_rewards[episode]
                 returns.append(
-                    np.sum(
-                        rewards
-                        * self.cfg.discount_factor
-                        ** np.flip(np.arange(rewards.shape[0]), axis=-1).reshape(rewards.shape)
-                    )
+                    np.sum(rewards * self.cfg.discount_factor ** np.arange(rewards.shape[0]).reshape(rewards.shape))
                 )
 
         if not len(returns):
@@ -298,16 +290,12 @@ class CEM(Agent):
 
         # get elite observations/states and actions
         indexes = (returns >= return_threshold).nonzero()[0]
-        elite_observations = np.concatenate(
-            [sampled_observations[limits[i][0] : limits[i][1]] for i in indexes], axis=0
-        )
+        elite_observations = np.concatenate([sampled_observations[limits[i]] for i in indexes], axis=0)
         try:
-            elite_states = np.concatenate([sampled_states[limits[i][0] : limits[i][1]] for i in indexes], axis=0)
+            elite_states = np.concatenate([sampled_states[limits[i]] for i in indexes], axis=0)
         except TypeError:
             elite_states = None
-        elite_actions = np.concatenate([sampled_actions[limits[i][0] : limits[i][1]] for i in indexes], axis=0).reshape(
-            -1
-        )
+        elite_actions = np.concatenate([sampled_actions[limits[i]] for i in indexes], axis=0).reshape(-1)
 
         # compute policy loss
         grad, policy_loss = _update_policy(
