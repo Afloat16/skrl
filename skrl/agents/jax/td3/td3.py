@@ -506,7 +506,7 @@ class TD3(Agent):
                 self.target_critic_2.update_parameters(self.critic_2, polyak=self.cfg.polyak)
 
             # update learning rate
-            if self.policy_scheduler:
+            if self.policy_scheduler and not self._update_counter % self.cfg.policy_delay:
                 self.policy_learning_rate *= self.policy_scheduler(timestep)
             if self.critic_scheduler:
                 self.critic_learning_rate *= self.critic_scheduler(timestep)

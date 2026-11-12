@@ -489,7 +489,7 @@ class TD3_RNN(Agent):
             self.scaler.update()  # called once, after optimizers have been stepped
 
             # update learning rate
-            if self.policy_scheduler:
+            if self.policy_scheduler and not self._update_counter % self.cfg.policy_delay:
                 self.policy_scheduler.step()
             if self.critic_scheduler:
                 self.critic_scheduler.step()
