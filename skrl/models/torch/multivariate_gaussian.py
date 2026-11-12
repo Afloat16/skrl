@@ -67,6 +67,13 @@ class MultivariateGaussianMixin:
         mean_actions, outputs = self.compute(inputs, role)
         log_std = outputs["log_std"]
 
+        # Distribution arithmetic needs at least float32 to preserve small
+        # variances and support the triangular solve used for log probability.
+        dtype = torch.promote_types(torch.promote_types(mean_actions.dtype, log_std.dtype), torch.float32)
+        mean_actions = mean_actions.to(dtype)
+        log_std = log_std.to(dtype)
+        outputs["log_std"] = log_std
+
         # clip mean actions
         if self._mg_clip_mean_actions:
             mean_actions = torch.clamp(mean_actions, min=self._mg_min_actions, max=self._mg_max_actions)

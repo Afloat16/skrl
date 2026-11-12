@@ -81,6 +81,13 @@ class GaussianMixin:
         mean_actions, outputs = self.compute(inputs, role)
         log_std = outputs["log_std"]
 
+        # Distribution arithmetic needs at least float32 to preserve small
+        # variances and avoid half-precision log-probability overflow.
+        dtype = torch.promote_types(torch.promote_types(mean_actions.dtype, log_std.dtype), torch.float32)
+        mean_actions = mean_actions.to(dtype)
+        log_std = log_std.to(dtype)
+        outputs["log_std"] = log_std
+
         # clip mean actions
         if self._g_clip_mean_actions:
             mean_actions = torch.clamp(mean_actions, min=self._g_min_actions, max=self._g_max_actions)
