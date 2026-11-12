@@ -644,7 +644,7 @@ class TRPO_RNN(Agent):
             new_params = params + alpha * full_step
             vector_to_parameters(new_params, self.policy.parameters())
 
-            expected_improvement *= alpha
+            expected_improvement_alpha = expected_improvement * alpha
             kl = kl_divergence(
                 policy_1=self.backup_policy,
                 policy_2=self.policy,
@@ -662,7 +662,10 @@ class TRPO_RNN(Agent):
                 advantages=sampled_advantages,
             )
 
-            if kl < self.cfg.max_kl_divergence and (loss - policy_loss) / expected_improvement > self.cfg.accept_ratio:
+            if (
+                kl < self.cfg.max_kl_divergence
+                and (loss - policy_loss) / expected_improvement_alpha > self.cfg.accept_ratio
+            ):
                 restore_policy_flag = False
                 break
 
