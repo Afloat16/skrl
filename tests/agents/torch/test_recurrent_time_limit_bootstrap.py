@@ -103,11 +103,7 @@ def _rollout(name, shared, asymmetric, *, bootstrap=True, next_episode_reward=10
     action_space = envs[0].action_space
     state_space = observation_space if asymmetric else None
     policy = _LinearRecurrent(observation_space, state_space, action_space, shared=shared)
-    value = (
-        policy
-        if shared
-        else _LinearRecurrent(observation_space, state_space, action_space, use_states=asymmetric)
-    )
+    value = policy if shared else _LinearRecurrent(observation_space, state_space, action_space, use_states=asymmetric)
     memory = RandomMemory(memory_size=2, num_envs=2, device="cpu")
     cfg = {
         "rollouts": 2,
@@ -206,9 +202,7 @@ def test_recurrent_bootstrap_uses_continued_critic_state(name, shared, asymmetri
 @pytest.mark.parametrize("name,shared,asymmetric", _CASES)
 @pytest.mark.parametrize("next_episode_reward", [100, 1000])
 def test_recurrent_returns_stop_at_truncation(name, shared, asymmetric, next_episode_reward):
-    agent, memory, _, _ = _rollout(
-        name, shared, asymmetric, next_episode_reward=next_episode_reward, update=True
-    )
+    agent, memory, _, _ = _rollout(name, shared, asymmetric, next_episode_reward=next_episode_reward, update=True)
     factor = 10 if asymmetric else 1
     # The first episode's return is independent of the reward after its reset.
     # The continuing environment still includes its next value and GAE trace.
