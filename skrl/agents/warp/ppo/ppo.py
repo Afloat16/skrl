@@ -37,11 +37,13 @@ def enable_grad(obj, *, enabled: bool):
 def _time_limit_bootstrap(
     rewards: wp.array2d[float],
     next_values: wp.array2d[float],
+    terminated: wp.array2d[wp.int8],
     truncated: wp.array2d[wp.int8],
     discount_factor: float,
 ):
     i = wp.tid()
-    rewards[i, 0] = rewards[i, 0] + discount_factor * next_values[i, 0] * wp.float32(truncated[i, 0])
+    if truncated[i, 0] and not terminated[i, 0]:
+        rewards[i, 0] = rewards[i, 0] + discount_factor * next_values[i, 0]
 
 
 @wp.kernel(enable_backward=False)
@@ -394,7 +396,7 @@ class PPO(Agent):
                 wp.launch(
                     _time_limit_bootstrap,
                     dim=rewards.shape[0],
-                    inputs=[rewards, next_values, truncated, self.cfg.discount_factor],
+                    inputs=[rewards, next_values, terminated, truncated, self.cfg.discount_factor],
                     device=self.device,
                 )
 

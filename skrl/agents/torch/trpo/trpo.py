@@ -391,7 +391,7 @@ class TRPO(Agent):
                     next_values, _ = self.value.act(inputs, role="value")
                     next_values = self._value_preprocessor(next_values, inverse=True)
 
-                rewards += self.cfg.discount_factor * next_values * truncated
+                rewards += self.cfg.discount_factor * next_values * (truncated & ~terminated)
 
             # storage transition in memory
             self.memory.add_samples(

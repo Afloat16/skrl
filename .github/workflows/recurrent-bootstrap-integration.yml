@@ -1,0 +1,58 @@
+name: Combined recurrent bootstrap regression validation
+
+on:
+  push:
+    branches:
+      - validation/recurrent-bootstrap-integration-20261115
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      BASE_SHA: c0ad68a1e3feb4d288570db87403648074cabdb7
+      SOURCE_A: 12d06f3f257e1cafa25154a7094072046e9d5aed
+      SOURCE_B: ab4680debbfc104c19544d030e1cd201f776a390
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      MKL_NUM_THREADS: 1
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+        with:
+          version: "0.13.4"
+          enable-cache: true
+      - name: Verify the exact composition of the independent patches
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+
+          base, a, b = (os.environ[key] for key in ["BASE_SHA", "SOURCE_A", "SOURCE_B"])
+          def paths(sha):
+              return set(subprocess.check_output(["git", "diff", "--name-only", base, sha, "--", "skrl", "tests"], text=True).splitlines())
+          first, second = paths(a), paths(b)
+          for path in sorted(first | second):
+              source = b if path in second else a
+              expected = subprocess.check_output(["git", "show", f"{source}:{path}"], text=True)
+              if path.startswith("skrl/") and path in second:
+                  assert expected.count("* next_values * truncated") == 1
+                  expected = expected.replace("* next_values * truncated", "* next_values * (truncated & ~terminated)")
+              assert Path(path).read_text() == expected, path
+          print(f"COMPOSITION_VERIFIED files={len(first | second)} sources={a},{b}")
+          PY
+      - name: Create CPU environment
+        timeout-minutes: 10
+        run: |
+          uv venv --python 3.12
+          uv pip install -e '.[tests]' numpy==1.26.4 gymnasium==1.1.1
+          uv pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify both fixes together
+        run: |
+          uv run --no-sync python -m pytest tests/agents/torch/test_time_limit_bootstrap.py tests/agents/torch/test_recurrent_time_limit_bootstrap.py -q

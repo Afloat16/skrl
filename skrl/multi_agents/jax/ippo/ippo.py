@@ -383,7 +383,7 @@ class IPPO(MultiAgent):
                     next_values, _ = self.values[uid].act(inputs, role="value")
                     next_values = self._value_preprocessor[uid](next_values, inverse=True)
 
-                    rewards[uid] += self.cfg.discount_factor[uid] * next_values * truncated[uid]
+                    rewards[uid] += self.cfg.discount_factor[uid] * next_values * (truncated[uid] & ~terminated[uid])
 
                 # storage transition in memory
                 self.memories[uid].add_samples(
