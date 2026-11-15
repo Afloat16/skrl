@@ -1,0 +1,445 @@
+{
+  "schema_version": 1,
+  "repository": "Toni-SM/skrl",
+  "fork": "Afloat16/skrl",
+  "base_branch": "develop",
+  "base_sha": "c0ad68a1e3feb4d288570db87403648074cabdb7",
+  "branch": "fix/terminal-time-limit-bootstrap-20261115",
+  "source_sha": "12d06f3f257e1cafa25154a7094072046e9d5aed",
+  "validation_branch": "validation/terminal-time-limit-bootstrap-20261115",
+  "validation_sha": "09757851b9b26cce8e465be308c65ba977c81287",
+  "validation_run_id": 43670074588,
+  "validation_url": "https://github.com/Afloat16/skrl/actions/runs/43670074588",
+  "title": "Exclude terminal states from truncation bootstrap",
+  "state": "ready_prefill",
+  "impact": {
+    "bug": "True terminal transitions bootstrap when the same step is truncated",
+    "fix": "Require truncation without termination before adding continuation value",
+    "reward_example": {
+      "reward": 1,
+      "discount_factor": 0.5,
+      "next_value": 10,
+      "old_terminal_target": 6,
+      "new_terminal_target": 1
+    },
+    "affected_implementations": 17
+  },
+  "dedup": {
+    "upstream_base": "c0ad68a1e3feb4d288570db87403648074cabdb7",
+    "own_prs": [
+      {
+        "number": 500,
+        "title": "Advance batched replay writes once per transition batch",
+        "state": "open",
+        "url": "https://github.com/Toni-SM/skrl/pull/500"
+      },
+      {
+        "number": 499,
+        "title": "Preserve temporal order in random replay sequences",
+        "state": "open",
+        "url": "https://github.com/Toni-SM/skrl/pull/499"
+      },
+      {
+        "number": 496,
+        "title": "Propagate JAX worker failures and validate launch topology",
+        "state": "closed",
+        "url": "https://github.com/Toni-SM/skrl/pull/496"
+      },
+      {
+        "number": 495,
+        "title": "Preserve memory export columns and boolean values on reload",
+        "state": "open",
+        "url": "https://github.com/Toni-SM/skrl/pull/495"
+      },
+      {
+        "number": 490,
+        "title": "Initialize linear layers in nested containers",
+        "state": "open",
+        "url": "https://github.com/Toni-SM/skrl/pull/490"
+      },
+      {
+        "number": 489,
+        "title": "Reduce noncontiguous model gradients",
+        "state": "closed",
+        "url": "https://github.com/Toni-SM/skrl/pull/489"
+      },
+      {
+        "number": 488,
+        "title": "Handle clipping for unbounded action spaces",
+        "state": "open",
+        "url": "https://github.com/Toni-SM/skrl/pull/488"
+      },
+      {
+        "number": 475,
+        "title": "Align Ornstein-Uhlenbeck mean reversion across JAX and Warp",
+        "state": "closed",
+        "url": "https://github.com/Toni-SM/skrl/pull/475"
+      },
+      {
+        "number": 471,
+        "title": "Use population batch variance when merging running moments",
+        "state": "open",
+        "url": "https://github.com/Toni-SM/skrl/pull/471"
+      },
+      {
+        "number": 469,
+        "title": "Fix the Gaussian KL logarithmic term in PyTorch TRPO",
+        "state": "closed",
+        "url": "https://github.com/Toni-SM/skrl/pull/469"
+      },
+      {
+        "number": 467,
+        "title": "Correct multivariate Gaussian standard deviation factors",
+        "state": "closed",
+        "url": "https://github.com/Toni-SM/skrl/pull/467"
+      },
+      {
+        "number": 465,
+        "title": "Restore the learned SAC entropy coefficient on resume",
+        "state": "open",
+        "url": "https://github.com/Toni-SM/skrl/pull/465"
+      }
+    ],
+    "old_branches": [
+      {
+        "branch": "develop",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/batched-replay-write-cursor-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/cem-vector-episode-selection-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/gaussian-probability-precision-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/jax-categorical-entropy-inputs-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/jax-independent-categorical-heads-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/jax-launcher-failure-status",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/nested-linear-initialization-20261029",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/noncontiguous-gradient-reduction-20261029",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/ou-mean-reversion-20261009",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/replay-sequence-chronology-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/running-scaler-inverse-epsilon-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/single-transition-advantages-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/td3-delayed-policy-schedules-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/trpo-backtracking-improvement-20261112",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix/unbounded-action-clipping-20261029",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "fix-exported-memory-column-mapping",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "skrl-multivariate-cholesky-scale",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "skrl-population-batch-moments",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "skrl-sac-entropy-checkpoint",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      },
+      {
+        "branch": "skrl-trpo-kl-logterm",
+        "bootstrap": "rewards += self.cfg.discount_factor * next_values * truncated"
+      }
+    ],
+    "related_upstream": [
+      259,
+      363,
+      364,
+      438,
+      449,
+      494
+    ],
+    "no_duplicate_found": true,
+    "distinction": "PR 438 added truncation boundaries and next-state values but still multiplied bootstrap values by truncated alone; this contribution handles simultaneous termination/truncation. PRs 363/364 change GAE masks; PR 494 touches wrappers only."
+  },
+  "policy": {
+    "contributing_url": "https://github.com/Toni-SM/skrl/blob/c0ad68a1e3feb4d288570db87403648074cabdb7/CONTRIBUTING.md",
+    "pre_commit_url": "https://github.com/Toni-SM/skrl/blob/c0ad68a1e3feb4d288570db87403648074cabdb7/.pre-commit-config.yaml",
+    "concurrent_pr_numeric_cap_found": false,
+    "ai_disclosure_required": false,
+    "own_open_prs": 7
+  },
+  "source_files": [
+    "skrl/agents/torch/a2c/a2c.py",
+    "skrl/agents/torch/a2c/a2c_rnn.py",
+    "skrl/agents/torch/amp/amp.py",
+    "skrl/agents/torch/ppo/ppo.py",
+    "skrl/agents/torch/ppo/ppo_rnn.py",
+    "skrl/agents/torch/rpo/rpo.py",
+    "skrl/agents/torch/rpo/rpo_rnn.py",
+    "skrl/agents/torch/trpo/trpo.py",
+    "skrl/agents/torch/trpo/trpo_rnn.py",
+    "skrl/multi_agents/torch/ippo/ippo.py",
+    "skrl/multi_agents/torch/mappo/mappo.py",
+    "skrl/agents/jax/a2c/a2c.py",
+    "skrl/agents/jax/ppo/ppo.py",
+    "skrl/agents/jax/rpo/rpo.py",
+    "skrl/multi_agents/jax/ippo/ippo.py",
+    "skrl/multi_agents/jax/mappo/mappo.py",
+    "skrl/agents/warp/ppo/ppo.py",
+    "tests/agents/torch/test_time_limit_bootstrap.py",
+    "tests/agents/jax/test_time_limit_bootstrap.py",
+    "tests/agents/warp/test_time_limit_bootstrap.py"
+  ],
+  "new_upstream_prs": 0,
+  "new_merged_prs": 0,
+  "validation_status": "completed",
+  "validation_conclusion": "success",
+  "validation_finished_at": "2026-11-15T03:07:00Z",
+  "body": "Gymnasium's [TimeLimit](https://github.com/Farama-Foundation/Gymnasium/blob/v1.1.1/gymnasium/wrappers/common.py) can report termination and truncation on the same step. With time-limit bootstrapping enabled, the agents currently add a continuation value whenever truncated is true, including transitions that have actually terminated. That inflates the terminal value target: with reward 1, discount 0.5, and a critic value of 10, the target becomes 6 instead of 1.\n\nGate the truncation bootstrap on `truncated & ~terminated` across the Torch and JAX on-policy agents, including recurrent variants and IPPO/MAPPO. Apply the same condition in the Warp PPO kernel. The existing GAE episode-boundary handling is preserved.\n\nRegression coverage checks all four flag combinations, enabled/disabled bootstrapping, and JAX boolean/int8 signals through the public agent APIs. A real Gymnasium TimeLimit regression runs PPO.post_interaction and verifies both the resulting returns and a finite critic parameter update.\n\nValidation: [CPU verification run](https://github.com/Afloat16/skrl/actions/runs/43670074588).\n\n- Unchanged source: 12 Torch, 10 JAX, and 1 Warp regression failures; all disabled-bootstrap controls pass.\n- Corrected public API regressions: 46 pass.\n- Complete CPU agent suites: Torch 91 pass, JAX 48 pass, Warp 10 pass. The 103 CUDA-parameterized cases are deselected.\n- Repository pre-commit hooks pass, including Black, isort, and Pyright.\n\nTested on Python 3.12.3, Torch 2.6.0+cpu, JAX 0.4.35 / Flax 0.10.2, and Warp 1.15.0 / warp-nn 0.4.1.\n",
+  "prefilled_url": "https://github.com/Toni-SM/skrl/compare/develop...Afloat16:skrl:fix/terminal-time-limit-bootstrap-20261115?expand=1&title=Exclude%20terminal%20states%20from%20truncation%20bootstrap&body=Gymnasium's%20%5BTimeLimit%5D(https%3A%2F%2Fgithub.com%2FFarama-Foundation%2FGymnasium%2Fblob%2Fv1.1.1%2Fgymnasium%2Fwrappers%2Fcommon.py)%20can%20report%20termination%20and%20truncation%20on%20the%20same%20step.%20With%20time-limit%20bootstrapping%20enabled%2C%20the%20agents%20currently%20add%20a%20continuation%20value%20whenever%20truncated%20is%20true%2C%20including%20transitions%20that%20have%20actually%20terminated.%20That%20inflates%20the%20terminal%20value%20target%3A%20with%20reward%201%2C%20discount%200.5%2C%20and%20a%20critic%20value%20of%2010%2C%20the%20target%20becomes%206%20instead%20of%201.%0A%0AGate%20the%20truncation%20bootstrap%20on%20%60truncated%20%26%20~terminated%60%20across%20the%20Torch%20and%20JAX%20on-policy%20agents%2C%20including%20recurrent%20variants%20and%20IPPO%2FMAPPO.%20Apply%20the%20same%20condition%20in%20the%20Warp%20PPO%20kernel.%20The%20existing%20GAE%20episode-boundary%20handling%20is%20preserved.%0A%0ARegression%20coverage%20checks%20all%20four%20flag%20combinations%2C%20enabled%2Fdisabled%20bootstrapping%2C%20and%20JAX%20boolean%2Fint8%20signals%20through%20the%20public%20agent%20APIs.%20A%20real%20Gymnasium%20TimeLimit%20regression%20runs%20PPO.post_interaction%20and%20verifies%20both%20the%20resulting%20returns%20and%20a%20finite%20critic%20parameter%20update.%0A%0AValidation%3A%20%5BCPU%20verification%20run%5D(https%3A%2F%2Fgithub.com%2FAfloat16%2Fskrl%2Factions%2Fruns%2F43670074588).%0A%0A-%20Unchanged%20source%3A%2012%20Torch%2C%2010%20JAX%2C%20and%201%20Warp%20regression%20failures%3B%20all%20disabled-bootstrap%20controls%20pass.%0A-%20Corrected%20public%20API%20regressions%3A%2046%20pass.%0A-%20Complete%20CPU%20agent%20suites%3A%20Torch%2091%20pass%2C%20JAX%2048%20pass%2C%20Warp%2010%20pass.%20The%20103%20CUDA-parameterized%20cases%20are%20deselected.%0A-%20Repository%20pre-commit%20hooks%20pass%2C%20including%20Black%2C%20isort%2C%20and%20Pyright.%0A%0ATested%20on%20Python%203.12.3%2C%20Torch%202.6.0%2Bcpu%2C%20JAX%200.4.35%20%2F%20Flax%200.10.2%2C%20and%20Warp%201.15.0%20%2F%20warp-nn%200.4.1.%0A",
+  "direct_pr_attempt": {
+    "error": "GitHub API error 403: {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/pulls/pulls#create-a-pull-request\",\"status\":\"403\"}",
+    "error_code": "FORBIDDEN",
+    "error_data": {
+      "message": "Resource not accessible by integration",
+      "documentation_url": "https://docs.github.com/rest/pulls/pulls#create-a-pull-request",
+      "status": "403"
+    }
+  },
+  "tests": {
+    "torch": {
+      "results": [
+        "12 failed, 12 passed in 5.97s",
+        "BASELINE_CONFIRMED backend=torch failures=12 errors=0",
+        "24 passed in 1.93s",
+        "91 passed, 67 deselected, 133 warnings in 85.01s (0:01:25)"
+      ],
+      "dependencies": [
+        "absl-py==2.5.1",
+        "cloudpickle==3.1.2",
+        "coverage==7.17.3",
+        "farama-notifications==0.0.6",
+        "filelock==4.2.4",
+        "fsspec==2026.9.0",
+        "grpcio==1.85.1",
+        "gymnasium==1.1.1",
+        "hypothesis==6.170.15",
+        "iniconfig==2.3.1",
+        "jinja2==3.1.6",
+        "markdown==3.11.3",
+        "markupsafe==3.0.4",
+        "mpmath==1.3.0",
+        "networkx==3.7",
+        "numpy==1.26.4",
+        "packaging==26.3",
+        "pillow==13.0.0",
+        "pluggy==1.7.0",
+        "protobuf==7.36.2",
+        "pygments==2.21.0",
+        "pytest==9.2.0",
+        "pytest-cov==7.1.0",
+        "pytest-html==4.2.0",
+        "pytest-metadata==3.1.1",
+        "pyyaml==6.0.3",
+        "setuptools==84.2.1",
+        "sortedcontainers==2.4.0",
+        "sympy==1.13.1",
+        "tensorboard==2.21.0",
+        "tensorboard-data-server==0.7.2",
+        "torch==2.6.0+cpu",
+        "tqdm==4.70.1",
+        "typing-extensions==4.16.0",
+        "werkzeug==3.1.9"
+      ],
+      "python": "Python 3.12.3",
+      "job_id": 132677949900
+    },
+    "jax": {
+      "results": [
+        "10 failed, 10 passed in 5.13s",
+        "BASELINE_CONFIRMED backend=jax failures=10 errors=0",
+        "20 passed in 3.36s",
+        "48 passed, 28 deselected in 582.92s (0:09:42)"
+      ],
+      "dependencies": [
+        "absl-py==2.5.1",
+        "chex==0.1.90",
+        "cloudpickle==3.1.2",
+        "coverage==7.17.3",
+        "etils==1.15.0",
+        "farama-notifications==0.0.6",
+        "flax==0.10.2",
+        "fsspec==2026.9.0",
+        "grpcio==1.85.1",
+        "gymnasium==1.1.1",
+        "humanize==4.17.0",
+        "hypothesis==6.170.15",
+        "iniconfig==2.3.1",
+        "jax==0.4.35",
+        "jaxlib==0.4.35",
+        "jinja2==3.1.6",
+        "markdown==3.11.3",
+        "markdown-it-py==4.3.0",
+        "markupsafe==3.0.4",
+        "mdurl==0.1.2",
+        "ml-dtypes==0.5.4",
+        "msgpack==1.2.4",
+        "nest-asyncio==1.6.0",
+        "numpy==1.26.4",
+        "opt-einsum==3.4.0",
+        "optax==0.2.4",
+        "orbax-checkpoint==0.11.5",
+        "packaging==26.3",
+        "pillow==13.0.0",
+        "pluggy==1.7.0",
+        "protobuf==7.36.2",
+        "pygments==2.21.0",
+        "pytest==9.2.0",
+        "pytest-cov==7.1.0",
+        "pytest-html==4.2.0",
+        "pytest-metadata==3.1.1",
+        "pyyaml==6.0.3",
+        "rich==15.0.0",
+        "scipy==1.17.1",
+        "setuptools==84.2.1",
+        "simplejson==4.3.0",
+        "sortedcontainers==2.4.0",
+        "tensorboard==2.21.0",
+        "tensorboard-data-server==0.7.2",
+        "tensorstore==0.1.86",
+        "toolz==1.2.0",
+        "tqdm==4.70.1",
+        "typing-extensions==4.16.0",
+        "werkzeug==3.1.9",
+        "zipp==4.1.2"
+      ],
+      "python": "Python 3.12.3",
+      "job_id": 132677949753
+    },
+    "warp": {
+      "results": [
+        "1 failed, 1 passed in 6.89s",
+        "BASELINE_CONFIRMED backend=warp failures=1 errors=0",
+        "2 passed in 3.86s",
+        "10 passed, 8 deselected in 60.38s (0:01:00)"
+      ],
+      "dependencies": [
+        "absl-py==2.5.1",
+        "cloudpickle==3.1.2",
+        "coverage==7.17.3",
+        "farama-notifications==0.0.6",
+        "grpcio==1.85.1",
+        "gymnasium==1.1.1",
+        "hypothesis==6.170.15",
+        "iniconfig==2.3.1",
+        "jinja2==3.1.6",
+        "markdown==3.11.3",
+        "markupsafe==3.0.4",
+        "numpy==1.26.4",
+        "packaging==26.3",
+        "pillow==13.0.0",
+        "pluggy==1.7.0",
+        "protobuf==7.36.2",
+        "pygments==2.21.0",
+        "pytest==9.2.0",
+        "pytest-cov==7.1.0",
+        "pytest-html==4.2.0",
+        "pytest-metadata==3.1.1",
+        "pyyaml==6.0.3",
+        "setuptools==84.2.1",
+        "sortedcontainers==2.4.0",
+        "tensorboard==2.21.0",
+        "tensorboard-data-server==0.7.2",
+        "tqdm==4.70.1",
+        "typing-extensions==4.16.0",
+        "warp-lang==1.15.0",
+        "warp-nn==0.4.1",
+        "werkzeug==3.1.9"
+      ],
+      "python": "Python 3.12.3",
+      "job_id": 132677949943
+    }
+  },
+  "cpu_test_totals": {
+    "focused": 46,
+    "complete_agent_suites": 149,
+    "cuda_parameter_cases_deselected": 103,
+    "baseline_expected_failures": 23,
+    "baseline_controls_passed": 23
+  },
+  "formatting": {
+    "conclusion": "success",
+    "job_id": 132677949938,
+    "checks": [
+      "check-ast",
+      "check-case-conflict",
+      "check-docstring-first",
+      "check-merge-conflict",
+      "debug-statements",
+      "detect-private-key",
+      "end-of-file-fixer",
+      "name-tests-test",
+      "trailing-whitespace",
+      "codespell",
+      "black",
+      "isort",
+      "pyright"
+    ]
+  },
+  "source_author": "Afloat16",
+  "source_committer": "Afloat16",
+  "source_diff": {
+    "files": 20,
+    "production_files": 17,
+    "production_additions": 20,
+    "production_deletions": 18,
+    "test_files": 3
+  },
+  "references": {
+    "gymnasium_time_limit_source": "https://github.com/Farama-Foundation/Gymnasium/blob/v1.1.1/gymnasium/wrappers/common.py",
+    "prior_pr438": "https://github.com/Toni-SM/skrl/pull/438",
+    "source_compare": "https://github.com/Afloat16/skrl/compare/c0ad68a1e3feb4d288570db87403648074cabdb7...12d06f3f257e1cafa25154a7094072046e9d5aed"
+  },
+  "limits": [
+    "CPU validation only; CUDA-parameterized cases explicitly deselected",
+    "Complete agent/multi-agent test directories were run; this is not the complete repository environment/simulator test suite",
+    "Recurrent next-state value and truncation trace handling remain a separate existing issue; this change only gives termination precedence in truncation bootstrapping",
+    "No new upstream PR was created because the GitHub integration returned 403; no new merge is claimed"
+  ]
+}
