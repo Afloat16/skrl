@@ -1,0 +1,105 @@
+name: Terminal time-limit bootstrap validation
+
+on:
+  push:
+    branches:
+      - validation/terminal-time-limit-bootstrap-20261115
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [torch, jax, warp]
+    env:
+      BASE_SHA: c0ad68a1e3feb4d288570db87403648074cabdb7
+      CANDIDATE_SHA: 4d315849377b13e6f34da4fb3e0fdc8f896af097
+      BACKEND: ${{ matrix.backend }}
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      MKL_NUM_THREADS: 1
+      JAX_PLATFORMS: cpu
+      XLA_PYTHON_CLIENT_PREALLOCATE: "false"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+        with:
+          version: "0.13.4"
+          enable-cache: true
+      - name: Create CPU environment
+        timeout-minutes: 10
+        run: |
+          uv venv --python 3.12
+          uv pip install -e '.[tests]' numpy==1.26.4 gymnasium==1.1.1
+          case "$BACKEND" in
+            torch) uv pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu ;;
+            jax) uv pip install jax==0.4.35 jaxlib==0.4.35 flax==0.10.2 optax==0.2.4 ;;
+            warp) uv pip install warp-lang==1.15 warp-nn==0.4.1 ;;
+          esac
+          uv pip freeze
+      - name: Confirm source and test blobs
+        run: git diff --exit-code "$CANDIDATE_SHA" HEAD -- skrl tests
+      - name: Confirm unchanged source fails the terminal regressions
+        run: |
+          uv run python - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+          import xml.etree.ElementTree as ET
+
+          base = os.environ["BASE_SHA"]
+          backend = os.environ["BACKEND"]
+          changed = subprocess.check_output(["git", "diff", "--name-only", base, "HEAD", "--", "skrl"], text=True).splitlines()
+          for path in changed:
+              Path(path).write_bytes(subprocess.check_output(["git", "show", f"{base}:{path}"]))
+          try:
+              result = subprocess.run([
+                  "python", "-m", "pytest", f"tests/agents/{backend}/test_time_limit_bootstrap.py",
+                  "-q", "--junitxml=/tmp/baseline.xml",
+              ])
+              root = ET.parse("/tmp/baseline.xml").getroot()
+              suites = list(root.iter("testsuite"))
+              errors = sum(int(s.get("errors", 0)) for s in suites)
+              failures = sum(int(s.get("failures", 0)) for s in suites)
+              expected = {"torch": 12, "jax": 10, "warp": 1}[backend]
+              assert result.returncode == 1 and errors == 0 and failures == expected, (
+                  result.returncode, errors, failures, expected
+              )
+              print(f"BASELINE_CONFIRMED backend={backend} failures={failures} errors={errors}", flush=True)
+          finally:
+              subprocess.run(["git", "checkout", "--", *changed], check=True)
+          PY
+      - name: Run corrected public API regressions
+        run: uv run python -m pytest "tests/agents/$BACKEND/test_time_limit_bootstrap.py" -q
+      - name: Run existing CPU agent suites
+        run: |
+          if [ "$BACKEND" = warp ]; then
+            uv run python -m pytest tests/agents/warp -q -k 'not cuda'
+          else
+            uv run python -m pytest "tests/agents/$BACKEND" "tests/multi_agents/$BACKEND" -q -k 'not cuda'
+          fi
+  formatting:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BASE_SHA: c0ad68a1e3feb4d288570db87403648074cabdb7
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+        with:
+          version: "0.13.4"
+          enable-cache: true
+      - run: uv venv --python 3.12
+      - run: uv pip install pre-commit
+      - name: Run repository contribution hooks
+        run: |
+          git diff --name-only "$BASE_SHA" HEAD -- skrl tests | xargs uv run pre-commit run --show-diff-on-failure --files
