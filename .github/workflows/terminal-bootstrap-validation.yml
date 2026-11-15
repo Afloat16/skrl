@@ -18,7 +18,7 @@ jobs:
         backend: [torch, jax, warp]
     env:
       BASE_SHA: c0ad68a1e3feb4d288570db87403648074cabdb7
-      CANDIDATE_SHA: 4d315849377b13e6f34da4fb3e0fdc8f896af097
+      CANDIDATE_SHA: 12d06f3f257e1cafa25154a7094072046e9d5aed
       BACKEND: ${{ matrix.backend }}
       OMP_NUM_THREADS: 1
       OPENBLAS_NUM_THREADS: 1
@@ -44,11 +44,12 @@ jobs:
             warp) uv pip install warp-lang==1.15 warp-nn==0.4.1 ;;
           esac
           uv pip freeze
+          uv run --no-sync python --version
       - name: Confirm source and test blobs
         run: git diff --exit-code "$CANDIDATE_SHA" HEAD -- skrl tests
       - name: Confirm unchanged source fails the terminal regressions
         run: |
-          uv run python - <<'PY'
+          uv run --no-sync python - <<'PY'
           import os
           from pathlib import Path
           import subprocess
@@ -77,13 +78,13 @@ jobs:
               subprocess.run(["git", "checkout", "--", *changed], check=True)
           PY
       - name: Run corrected public API regressions
-        run: uv run python -m pytest "tests/agents/$BACKEND/test_time_limit_bootstrap.py" -q
+        run: uv run --no-sync python -m pytest "tests/agents/$BACKEND/test_time_limit_bootstrap.py" -q
       - name: Run existing CPU agent suites
         run: |
           if [ "$BACKEND" = warp ]; then
-            uv run python -m pytest tests/agents/warp -q -k 'not cuda'
+            uv run --no-sync python -m pytest tests/agents/warp -q -k 'not cuda'
           else
-            uv run python -m pytest "tests/agents/$BACKEND" "tests/multi_agents/$BACKEND" -q -k 'not cuda'
+            uv run --no-sync python -m pytest "tests/agents/$BACKEND" "tests/multi_agents/$BACKEND" -q -k 'not cuda'
           fi
   formatting:
     runs-on: ubuntu-24.04
@@ -102,4 +103,4 @@ jobs:
       - run: uv pip install pre-commit
       - name: Run repository contribution hooks
         run: |
-          git diff --name-only "$BASE_SHA" HEAD -- skrl tests | xargs uv run pre-commit run --show-diff-on-failure --files
+          git diff --name-only "$BASE_SHA" HEAD -- skrl tests | xargs uv run --no-sync pre-commit run --show-diff-on-failure --files
