@@ -1,0 +1,1848 @@
+{
+  "schema_version": 1,
+  "repository": "Toni-SM/skrl",
+  "fork": "Afloat16/skrl",
+  "base_branch": "develop",
+  "base_sha": "c0ad68a1e3feb4d288570db87403648074cabdb7",
+  "branch": "fix/recurrent-time-limit-bootstrap-20261115",
+  "source_sha": "ab4680debbfc104c19544d030e1cd201f776a390",
+  "source_author": "Afloat16",
+  "source_committer": "Afloat16",
+  "validation_branch": "validation/recurrent-time-limit-bootstrap-20261115",
+  "validation_sha": "33a6c2f3f20d37753c145caeaecaeec9eda3d5f8",
+  "validation_run_id": 43672116748,
+  "validation_url": "https://github.com/Afloat16/skrl/actions/runs/43672116748",
+  "validation_status": "completed",
+  "validation_conclusion": "success",
+  "title": "Correct recurrent time-limit bootstrapping",
+  "body": "With `time_limit_bootstrap=True`, the recurrent A2C/PPO/RPO/TRPO agents still add the current value at a truncation, then propagate GAE through the reset into the next episode. The recurrent state is reset at that boundary, so a later episode's rewards can incorrectly change the preceding episode's value target.\n\nEstimate the next-state value with the critic's continuation hidden state before resetting it. For shared models, use the policy's final hidden state for that step. Discard the extra look-ahead state so it cannot advance the actual rollout twice. Pass truncation signals and the configured bootstrap mode into GAE, matching the boundary handling added to the feed-forward agents in #438.\n\nThe regressions use real `nn.RNN` models and Gymnasium `TimeLimit`, including separate/shared models and asymmetric critics. They verify stored rewards/values, continuing and reset hidden states, unchanged normalizer statistics, shared-cache consumption, and actual agent updates. In the PPO_RNN example, changing the next episode's reward from 100 to 1000 changes the old preceding return from 50.45 to 455.45; the corrected return remains 3.\n\n[CPU validation](https://github.com/Afloat16/skrl/actions/runs/43672116748):\n\n- Unchanged source: 33 regression assertion failures and 14 passing controls.\n- Corrected regressions: 47 pass.\n- Complete Torch agent/multi-agent suites: 114 pass; 67 CUDA-parameterized cases deselected.\n- Repository pre-commit hooks pass, including Black, isort, and Pyright.\n\nTested with Python 3.12.3, Torch 2.6.0+cpu, NumPy 1.26.4, and Gymnasium 1.1.1. Disabled time-limit bootstrapping retains its existing behavior.\n",
+  "prefilled_url": "https://github.com/Toni-SM/skrl/compare/develop...Afloat16:skrl:fix/recurrent-time-limit-bootstrap-20261115?expand=1&title=Correct%20recurrent%20time-limit%20bootstrapping&body=With%20%60time_limit_bootstrap%3DTrue%60%2C%20the%20recurrent%20A2C%2FPPO%2FRPO%2FTRPO%20agents%20still%20add%20the%20current%20value%20at%20a%20truncation%2C%20then%20propagate%20GAE%20through%20the%20reset%20into%20the%20next%20episode.%20The%20recurrent%20state%20is%20reset%20at%20that%20boundary%2C%20so%20a%20later%20episode's%20rewards%20can%20incorrectly%20change%20the%20preceding%20episode's%20value%20target.%0A%0AEstimate%20the%20next-state%20value%20with%20the%20critic's%20continuation%20hidden%20state%20before%20resetting%20it.%20For%20shared%20models%2C%20use%20the%20policy's%20final%20hidden%20state%20for%20that%20step.%20Discard%20the%20extra%20look-ahead%20state%20so%20it%20cannot%20advance%20the%20actual%20rollout%20twice.%20Pass%20truncation%20signals%20and%20the%20configured%20bootstrap%20mode%20into%20GAE%2C%20matching%20the%20boundary%20handling%20added%20to%20the%20feed-forward%20agents%20in%20%23438.%0A%0AThe%20regressions%20use%20real%20%60nn.RNN%60%20models%20and%20Gymnasium%20%60TimeLimit%60%2C%20including%20separate%2Fshared%20models%20and%20asymmetric%20critics.%20They%20verify%20stored%20rewards%2Fvalues%2C%20continuing%20and%20reset%20hidden%20states%2C%20unchanged%20normalizer%20statistics%2C%20shared-cache%20consumption%2C%20and%20actual%20agent%20updates.%20In%20the%20PPO_RNN%20example%2C%20changing%20the%20next%20episode's%20reward%20from%20100%20to%201000%20changes%20the%20old%20preceding%20return%20from%2050.45%20to%20455.45%3B%20the%20corrected%20return%20remains%203.%0A%0A%5BCPU%20validation%5D(https%3A%2F%2Fgithub.com%2FAfloat16%2Fskrl%2Factions%2Fruns%2F43672116748)%3A%0A%0A-%20Unchanged%20source%3A%2033%20regression%20assertion%20failures%20and%2014%20passing%20controls.%0A-%20Corrected%20regressions%3A%2047%20pass.%0A-%20Complete%20Torch%20agent%2Fmulti-agent%20suites%3A%20114%20pass%3B%2067%20CUDA-parameterized%20cases%20deselected.%0A-%20Repository%20pre-commit%20hooks%20pass%2C%20including%20Black%2C%20isort%2C%20and%20Pyright.%0A%0ATested%20with%20Python%203.12.3%2C%20Torch%202.6.0%2Bcpu%2C%20NumPy%201.26.4%2C%20and%20Gymnasium%201.1.1.%20Disabled%20time-limit%20bootstrapping%20retains%20its%20existing%20behavior.%0A",
+  "state": "ready_prefill",
+  "direct_pr_attempt": {
+    "error": "GitHub API error 403: {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/pulls/pulls#create-a-pull-request\",\"status\":\"403\"}",
+    "error_code": "FORBIDDEN",
+    "error_data": {
+      "message": "Resource not accessible by integration",
+      "documentation_url": "https://docs.github.com/rest/pulls/pulls#create-a-pull-request",
+      "status": "403"
+    }
+  },
+  "new_upstream_prs": 0,
+  "new_merged_prs": 0,
+  "impact": {
+    "bug": "Recurrent agents with time_limit_bootstrap=True use current-state values and propagate GAE across truncation/reset boundaries",
+    "fix": "Compute the next-state critic value with the continuation recurrent state before reset; discard the look-ahead state; stop GAE at truncation when bootstrapping is enabled",
+    "affected_algorithms": [
+      "A2C_RNN",
+      "PPO_RNN",
+      "RPO_RNN",
+      "TRPO_RNN"
+    ],
+    "analytic_symmetric_example": {
+      "next_episode_rewards": [
+        100,
+        1000
+      ],
+      "old_preceding_returns": [
+        50.44999694824219,
+        455.4499816894531
+      ],
+      "new_preceding_returns": [
+        3,
+        3
+      ]
+    },
+    "analytic_asymmetric_example": {
+      "next_episode_rewards": [
+        100,
+        1000
+      ],
+      "old_preceding_returns": [
+        90.5,
+        495.5
+      ],
+      "new_preceding_returns": [
+        21,
+        21
+      ]
+    }
+  },
+  "probes": {
+    "baseline": [
+      {
+        "shared": false,
+        "asymmetric": false,
+        "next_episode_reward": 100,
+        "rewards": [
+          [
+            [
+              1.5
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              103.5
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              7
+            ],
+            [
+              6
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              50.44999694824219
+            ],
+            [
+              94.77499389648438
+            ]
+          ],
+          [
+            [
+              108
+            ],
+            [
+              205.5
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": false,
+        "asymmetric": false,
+        "next_episode_reward": 1000,
+        "rewards": [
+          [
+            [
+              1.5
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              1003.5
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              7
+            ],
+            [
+              6
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              455.4499816894531
+            ],
+            [
+              94.77499389648438
+            ]
+          ],
+          [
+            [
+              1008
+            ],
+            [
+              205.5
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": false,
+        "asymmetric": true,
+        "next_episode_reward": 100,
+        "rewards": [
+          [
+            [
+              6
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              135
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              10
+            ],
+            [
+              20
+            ]
+          ],
+          [
+            [
+              70
+            ],
+            [
+              60
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              90.5
+            ],
+            [
+              119.75
+            ]
+          ],
+          [
+            [
+              180
+            ],
+            [
+              255
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": false,
+        "asymmetric": true,
+        "next_episode_reward": 1000,
+        "rewards": [
+          [
+            [
+              6
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              1035
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              10
+            ],
+            [
+              20
+            ]
+          ],
+          [
+            [
+              70
+            ],
+            [
+              60
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              495.5
+            ],
+            [
+              119.75
+            ]
+          ],
+          [
+            [
+              1080
+            ],
+            [
+              255
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": true,
+        "asymmetric": false,
+        "next_episode_reward": 100,
+        "rewards": [
+          [
+            [
+              1.5
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              103.5
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              7
+            ],
+            [
+              6
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              50.44999694824219
+            ],
+            [
+              94.77499389648438
+            ]
+          ],
+          [
+            [
+              108
+            ],
+            [
+              205.5
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": true,
+        "asymmetric": false,
+        "next_episode_reward": 1000,
+        "rewards": [
+          [
+            [
+              1.5
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              1003.5
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              7
+            ],
+            [
+              6
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              455.4499816894531
+            ],
+            [
+              94.77499389648438
+            ]
+          ],
+          [
+            [
+              1008
+            ],
+            [
+              205.5
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      }
+    ],
+    "candidate": [
+      {
+        "shared": false,
+        "asymmetric": false,
+        "next_episode_reward": 100,
+        "rewards": [
+          [
+            [
+              3
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              108
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              7
+            ],
+            [
+              6
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              3
+            ],
+            [
+              94.77499389648438
+            ]
+          ],
+          [
+            [
+              108
+            ],
+            [
+              205.5
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": false,
+        "asymmetric": false,
+        "next_episode_reward": 1000,
+        "rewards": [
+          [
+            [
+              3
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              1008
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              7
+            ],
+            [
+              6
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              3
+            ],
+            [
+              94.77499389648438
+            ]
+          ],
+          [
+            [
+              1008
+            ],
+            [
+              205.5
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": false,
+        "asymmetric": true,
+        "next_episode_reward": 100,
+        "rewards": [
+          [
+            [
+              21
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              180
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              10
+            ],
+            [
+              20
+            ]
+          ],
+          [
+            [
+              70
+            ],
+            [
+              60
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              21
+            ],
+            [
+              119.75
+            ]
+          ],
+          [
+            [
+              180
+            ],
+            [
+              255
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": false,
+        "asymmetric": true,
+        "next_episode_reward": 1000,
+        "rewards": [
+          [
+            [
+              21
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              1080
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              10
+            ],
+            [
+              20
+            ]
+          ],
+          [
+            [
+              70
+            ],
+            [
+              60
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              21
+            ],
+            [
+              119.75
+            ]
+          ],
+          [
+            [
+              1080
+            ],
+            [
+              255
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": true,
+        "asymmetric": false,
+        "next_episode_reward": 100,
+        "rewards": [
+          [
+            [
+              3
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              108
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              7
+            ],
+            [
+              6
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              3
+            ],
+            [
+              94.77499389648438
+            ]
+          ],
+          [
+            [
+              108
+            ],
+            [
+              205.5
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "shared": true,
+        "asymmetric": false,
+        "next_episode_reward": 1000,
+        "rewards": [
+          [
+            [
+              3
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              1008
+            ],
+            [
+              200
+            ]
+          ]
+        ],
+        "values": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              7
+            ],
+            [
+              6
+            ]
+          ]
+        ],
+        "returns": [
+          [
+            [
+              3
+            ],
+            [
+              94.77499389648438
+            ]
+          ],
+          [
+            [
+              1008
+            ],
+            [
+              205.5
+            ]
+          ]
+        ],
+        "policy_states": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                7
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ]
+      }
+    ]
+  },
+  "tests": {
+    "baseline": {
+      "assertion_failures": 33,
+      "passing_controls": 14,
+      "errors": 0,
+      "seconds": 3.28
+    },
+    "focused": {
+      "passed": 47,
+      "seconds": 2.43
+    },
+    "complete_cpu_agent_suites": {
+      "passed": 114,
+      "cuda_parameters_deselected": 67,
+      "warnings": 133,
+      "seconds": 122.01
+    },
+    "commands": [
+      "python -m pytest tests/agents/torch/test_recurrent_time_limit_bootstrap.py -q",
+      "python -m pytest tests/agents/torch tests/multi_agents/torch -q -k 'not cuda'"
+    ],
+    "repository_hooks": "passed",
+    "python": "3.12.3",
+    "dependencies": [
+      "absl-py==2.5.1",
+      "cloudpickle==3.1.2",
+      "coverage==7.17.3",
+      "farama-notifications==0.0.6",
+      "filelock==4.2.4",
+      "fsspec==2026.9.0",
+      "grpcio==1.85.1",
+      "gymnasium==1.1.1",
+      "hypothesis==6.170.15",
+      "iniconfig==2.3.1",
+      "jinja2==3.1.6",
+      "markdown==3.11.3",
+      "markupsafe==3.0.4",
+      "mpmath==1.3.0",
+      "networkx==3.7",
+      "numpy==1.26.4",
+      "packaging==26.3",
+      "pillow==13.0.0",
+      "pluggy==1.7.0",
+      "protobuf==7.36.2",
+      "pygments==2.21.0",
+      "pytest==9.2.0",
+      "pytest-cov==7.1.0",
+      "pytest-html==4.2.0",
+      "pytest-metadata==3.1.1",
+      "pyyaml==6.0.3",
+      "setuptools==84.2.1",
+      "sortedcontainers==2.4.0",
+      "sympy==1.13.1",
+      "tensorboard==2.21.0",
+      "tensorboard-data-server==0.7.2",
+      "torch==2.6.0+cpu",
+      "tqdm==4.70.1",
+      "typing-extensions==4.16.0",
+      "werkzeug==3.1.9"
+    ],
+    "verify_job_id": 132684232230,
+    "formatting_job_id": 132684231898
+  },
+  "source_diff": [
+    {
+      "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+      "additions": 23,
+      "deletions": 6
+    },
+    {
+      "path": "skrl/agents/torch/ppo/ppo_rnn.py",
+      "additions": 23,
+      "deletions": 6
+    },
+    {
+      "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+      "additions": 23,
+      "deletions": 6
+    },
+    {
+      "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+      "additions": 23,
+      "deletions": 6
+    },
+    {
+      "path": "tests/agents/torch/test_recurrent_time_limit_bootstrap.py",
+      "additions": 228,
+      "deletions": 0
+    }
+  ],
+  "dedup": {
+    "own_all_state_pr_count": 12,
+    "old_fork_branches": 21,
+    "old_rnn_source_files_read": 84,
+    "all_old_branches_still_use_current_values_and_no_truncation_gae": true,
+    "prior_branch_checks": [
+      {
+        "branch": "develop",
+        "file_sha": "2b24d2a2839ee1001a4deae62e2a5cd921b120e6",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/batched-replay-write-cursor-20261112",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/cem-vector-episode-selection-20261112",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/gaussian-probability-precision-20261112",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/jax-categorical-entropy-inputs-20261112",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/jax-independent-categorical-heads-20261112",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/jax-launcher-failure-status",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/nested-linear-initialization-20261029",
+        "file_sha": "89c80c7dd1e6632d27f91fe14fffbb2c34f85b32",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/noncontiguous-gradient-reduction-20261029",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/ou-mean-reversion-20261009",
+        "file_sha": "89c80c7dd1e6632d27f91fe14fffbb2c34f85b32",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/replay-sequence-chronology-20261112",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/running-scaler-inverse-epsilon-20261112",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/single-transition-advantages-20261112",
+        "file_sha": "3aea68b456825a7cc005ad6b8b8aafed0f55e043",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/td3-delayed-policy-schedules-20261112",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/trpo-backtracking-improvement-20261112",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix/unbounded-action-clipping-20261029",
+        "file_sha": "89c80c7dd1e6632d27f91fe14fffbb2c34f85b32",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "fix-exported-memory-column-mapping",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "skrl-multivariate-cholesky-scale",
+        "file_sha": "89c80c7dd1e6632d27f91fe14fffbb2c34f85b32",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "skrl-population-batch-moments",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "skrl-sac-entropy-checkpoint",
+        "file_sha": "081352523cdd93b63cd77147ff60d1026d5c1469",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "skrl-trpo-kl-logterm",
+        "file_sha": "89c80c7dd1e6632d27f91fe14fffbb2c34f85b32",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false,
+        "path": "skrl/agents/torch/ppo/ppo_rnn.py"
+      },
+      {
+        "branch": "develop",
+        "sha": "2ec6ee1620b51b997bbf5273899223c6d9626d58",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "2b42be00e90f6bcaa30f3db06ad5ee1dbbd7b716",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "develop",
+        "sha": "2ec6ee1620b51b997bbf5273899223c6d9626d58",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "692a0bf308b36a587feb45bbab8a5e641d8a9a7f",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "develop",
+        "sha": "2ec6ee1620b51b997bbf5273899223c6d9626d58",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "23e80c00f8818ee65efcf1bff24b2762a6a23494",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/batched-replay-write-cursor-20261112",
+        "sha": "4eeb735abb982e1d59bfac1f063fd1baca7a1abd",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/batched-replay-write-cursor-20261112",
+        "sha": "4eeb735abb982e1d59bfac1f063fd1baca7a1abd",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/batched-replay-write-cursor-20261112",
+        "sha": "4eeb735abb982e1d59bfac1f063fd1baca7a1abd",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/cem-vector-episode-selection-20261112",
+        "sha": "b4b47e42412f5f49cb0a47c32a132ebce6e19698",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/cem-vector-episode-selection-20261112",
+        "sha": "b4b47e42412f5f49cb0a47c32a132ebce6e19698",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/cem-vector-episode-selection-20261112",
+        "sha": "b4b47e42412f5f49cb0a47c32a132ebce6e19698",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/gaussian-probability-precision-20261112",
+        "sha": "8c86d94b150306c26e431dd242927ae8fdf5d31a",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/gaussian-probability-precision-20261112",
+        "sha": "8c86d94b150306c26e431dd242927ae8fdf5d31a",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/gaussian-probability-precision-20261112",
+        "sha": "8c86d94b150306c26e431dd242927ae8fdf5d31a",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/jax-categorical-entropy-inputs-20261112",
+        "sha": "aca39945a6b214cebe214ce1389c47d4ba477d67",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/jax-categorical-entropy-inputs-20261112",
+        "sha": "aca39945a6b214cebe214ce1389c47d4ba477d67",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/jax-categorical-entropy-inputs-20261112",
+        "sha": "aca39945a6b214cebe214ce1389c47d4ba477d67",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/jax-independent-categorical-heads-20261112",
+        "sha": "08ca35c4f5c56e83c683142d85c785b720fe6335",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/jax-independent-categorical-heads-20261112",
+        "sha": "08ca35c4f5c56e83c683142d85c785b720fe6335",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/jax-independent-categorical-heads-20261112",
+        "sha": "08ca35c4f5c56e83c683142d85c785b720fe6335",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/jax-launcher-failure-status",
+        "sha": "2bda6bb966a08c1de3d86095ebf7ff0b69f1daf2",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/jax-launcher-failure-status",
+        "sha": "2bda6bb966a08c1de3d86095ebf7ff0b69f1daf2",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/jax-launcher-failure-status",
+        "sha": "2bda6bb966a08c1de3d86095ebf7ff0b69f1daf2",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/nested-linear-initialization-20261029",
+        "sha": "77abc9d70393dc59283d59244cebb65856c27810",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c43079258911017040d16da55b78b2d47cbb6c3b",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/nested-linear-initialization-20261029",
+        "sha": "77abc9d70393dc59283d59244cebb65856c27810",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "fd4cbb4f47c0a6094fb4592c91d6040fa618c627",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/nested-linear-initialization-20261029",
+        "sha": "77abc9d70393dc59283d59244cebb65856c27810",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "7f413fdf4573c873d1292c71cfae563eca2a1646",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/noncontiguous-gradient-reduction-20261029",
+        "sha": "20540dfcfbba92870692c671c372d1222a36c534",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/noncontiguous-gradient-reduction-20261029",
+        "sha": "20540dfcfbba92870692c671c372d1222a36c534",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/noncontiguous-gradient-reduction-20261029",
+        "sha": "20540dfcfbba92870692c671c372d1222a36c534",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/ou-mean-reversion-20261009",
+        "sha": "53009ad44082513ce3b1d86f0d5036b823cdb996",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c43079258911017040d16da55b78b2d47cbb6c3b",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/ou-mean-reversion-20261009",
+        "sha": "53009ad44082513ce3b1d86f0d5036b823cdb996",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "fd4cbb4f47c0a6094fb4592c91d6040fa618c627",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/ou-mean-reversion-20261009",
+        "sha": "53009ad44082513ce3b1d86f0d5036b823cdb996",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "524ad7c0f8b375d33f27b54c069dfd8f42f4aa8f",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/replay-sequence-chronology-20261112",
+        "sha": "aff63a7a4f1d347fbc41b3c8c07b0ad4693b9403",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/replay-sequence-chronology-20261112",
+        "sha": "aff63a7a4f1d347fbc41b3c8c07b0ad4693b9403",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/replay-sequence-chronology-20261112",
+        "sha": "aff63a7a4f1d347fbc41b3c8c07b0ad4693b9403",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/running-scaler-inverse-epsilon-20261112",
+        "sha": "ea9a3f017e7a6e8514791bb085d43ca0990b4211",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/running-scaler-inverse-epsilon-20261112",
+        "sha": "ea9a3f017e7a6e8514791bb085d43ca0990b4211",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/running-scaler-inverse-epsilon-20261112",
+        "sha": "ea9a3f017e7a6e8514791bb085d43ca0990b4211",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/single-transition-advantages-20261112",
+        "sha": "ced41d15cf0e96a6a0a096a4b89d30032b075cf8",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "be0d77038330df56f8218d56e452782ceacd61f7",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/single-transition-advantages-20261112",
+        "sha": "ced41d15cf0e96a6a0a096a4b89d30032b075cf8",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "a99263196f61713f0658da6d81aa3becaff36f80",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/single-transition-advantages-20261112",
+        "sha": "ced41d15cf0e96a6a0a096a4b89d30032b075cf8",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "110490ec48b0d971864c00d6fbe92517b0c0bf29",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/td3-delayed-policy-schedules-20261112",
+        "sha": "0b1feb9cab48a908187eedb9998c9e0d48254a77",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/td3-delayed-policy-schedules-20261112",
+        "sha": "0b1feb9cab48a908187eedb9998c9e0d48254a77",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/td3-delayed-policy-schedules-20261112",
+        "sha": "0b1feb9cab48a908187eedb9998c9e0d48254a77",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/trpo-backtracking-improvement-20261112",
+        "sha": "d19911192c684c3c6b688b3363dc6b4a74f759a0",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/trpo-backtracking-improvement-20261112",
+        "sha": "d19911192c684c3c6b688b3363dc6b4a74f759a0",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/trpo-backtracking-improvement-20261112",
+        "sha": "d19911192c684c3c6b688b3363dc6b4a74f759a0",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "2c6120935d6b6a0b2b4153b9c3ee4e14768185a1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/unbounded-action-clipping-20261029",
+        "sha": "c4ba17b2bd88a5092b1816b1355774e1b0c63b30",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c43079258911017040d16da55b78b2d47cbb6c3b",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/unbounded-action-clipping-20261029",
+        "sha": "c4ba17b2bd88a5092b1816b1355774e1b0c63b30",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "fd4cbb4f47c0a6094fb4592c91d6040fa618c627",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix/unbounded-action-clipping-20261029",
+        "sha": "c4ba17b2bd88a5092b1816b1355774e1b0c63b30",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "7f413fdf4573c873d1292c71cfae563eca2a1646",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix-exported-memory-column-mapping",
+        "sha": "dc96efb6c67e9182785dd4b6892132b9ee18bbb2",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix-exported-memory-column-mapping",
+        "sha": "dc96efb6c67e9182785dd4b6892132b9ee18bbb2",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "fix-exported-memory-column-mapping",
+        "sha": "dc96efb6c67e9182785dd4b6892132b9ee18bbb2",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-multivariate-cholesky-scale",
+        "sha": "1dfdbf589261633d97dec3e3b295e1aa4f07d6f2",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c43079258911017040d16da55b78b2d47cbb6c3b",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-multivariate-cholesky-scale",
+        "sha": "1dfdbf589261633d97dec3e3b295e1aa4f07d6f2",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "fd4cbb4f47c0a6094fb4592c91d6040fa618c627",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-multivariate-cholesky-scale",
+        "sha": "1dfdbf589261633d97dec3e3b295e1aa4f07d6f2",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "524ad7c0f8b375d33f27b54c069dfd8f42f4aa8f",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-population-batch-moments",
+        "sha": "24f2afd2c22af6796af624f5d45622fb12d71fdc",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-population-batch-moments",
+        "sha": "24f2afd2c22af6796af624f5d45622fb12d71fdc",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-population-batch-moments",
+        "sha": "24f2afd2c22af6796af624f5d45622fb12d71fdc",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-sac-entropy-checkpoint",
+        "sha": "c61690ed0930e647abfb184be2ea8da3ba7e8462",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c4212b9b5414f5c0e1c17c9d56aff3e4825b8766",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-sac-entropy-checkpoint",
+        "sha": "c61690ed0930e647abfb184be2ea8da3ba7e8462",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "40f66ebfc43cae64fb3048efc6f8701f0b2b5eb1",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-sac-entropy-checkpoint",
+        "sha": "c61690ed0930e647abfb184be2ea8da3ba7e8462",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "1a470c2b2d9adda11438b40fb6423ae53fa8e18a",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-trpo-kl-logterm",
+        "sha": "c494dfc25941c29ad0fc3ce9c9de99457a523718",
+        "path": "skrl/agents/torch/a2c/a2c_rnn.py",
+        "file_sha": "c43079258911017040d16da55b78b2d47cbb6c3b",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-trpo-kl-logterm",
+        "sha": "c494dfc25941c29ad0fc3ce9c9de99457a523718",
+        "path": "skrl/agents/torch/rpo/rpo_rnn.py",
+        "file_sha": "fd4cbb4f47c0a6094fb4592c91d6040fa618c627",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      },
+      {
+        "branch": "skrl-trpo-kl-logterm",
+        "sha": "c494dfc25941c29ad0fc3ce9c9de99457a523718",
+        "path": "skrl/agents/torch/trpo/trpo_rnn.py",
+        "file_sha": "7f413fdf4573c873d1292c71cfae563eca2a1646",
+        "bootstrap": "rewards += self.cfg.discount_factor * values * truncated",
+        "gaeIncludesTruncation": false
+      }
+    ],
+    "related_upstream_prs": [
+      172,
+      259,
+      363,
+      364,
+      410,
+      438,
+      465,
+      476,
+      492,
+      493,
+      494,
+      499
+    ],
+    "distinction": "Merged PR 438 fixes feed-forward agents but does not change any of the four recurrent files. This contribution supplies the recurrent continuation state and GAE truncation handling absent from that PR and all 21 prior forks.",
+    "excluded_duplicate_candidate": "Discrete.start is already covered by open upstream PR 486."
+  },
+  "policy": {
+    "contributing_url": "https://github.com/Toni-SM/skrl/blob/c0ad68a1e3feb4d288570db87403648074cabdb7/CONTRIBUTING.md",
+    "pre_commit_url": "https://github.com/Toni-SM/skrl/blob/c0ad68a1e3feb4d288570db87403648074cabdb7/.pre-commit-config.yaml",
+    "concurrent_pr_numeric_cap_found": false,
+    "ai_disclosure_required": false,
+    "current_own_open_prs": 7
+  },
+  "independent_patch_integration": {
+    "other_source_sha": "12d06f3f257e1cafa25154a7094072046e9d5aed",
+    "other_contribution": "Exclude terminal states from truncation bootstrap",
+    "overlapping_files": [
+      "skrl/agents/torch/a2c/a2c_rnn.py",
+      "skrl/agents/torch/ppo/ppo_rnn.py",
+      "skrl/agents/torch/rpo/rpo_rnn.py",
+      "skrl/agents/torch/trpo/trpo_rnn.py"
+    ],
+    "exact_combined_reward_expression": "rewards += self.cfg.discount_factor * next_values * (truncated & ~terminated)",
+    "combined_branch": "validation/recurrent-bootstrap-integration-20261115",
+    "combined_sha": "d294bb75d275a00f81a1d3e206595419551f333d",
+    "validation_run_id": 43672319119,
+    "validation_url": "https://github.com/Afloat16/skrl/actions/runs/43672319119",
+    "status": "completed",
+    "conclusion": "success",
+    "exact_source_composition_verified": true,
+    "combined_regressions_passed": 71,
+    "seconds": 5.47,
+    "note": "The two source branches remain independently based on upstream. Their four overlapping reward lines must combine next-state values with the termination mask when rebasing after either merges; the exact composed source and both regression suites are verified in the combined commit."
+  },
+  "limits": [
+    "CPU float32 validation; no CUDA execution is claimed.",
+    "Complete Torch agent and multi-agent test directories were run, not all simulator/environment tests.",
+    "The change is scoped to enabled time-limit bootstrapping. Disabled mode retains the existing behavior established by the feed-forward implementation in PR 438.",
+    "Shared-model tests cover A2C_RNN, PPO_RNN and RPO_RNN; TRPO_RNN tests use separate policy and value models.",
+    "No upstream PR was created because the integration returned 403; no new merge is claimed."
+  ]
+}
