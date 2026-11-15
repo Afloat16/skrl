@@ -56,9 +56,7 @@ def compute_gae(
     for i in reversed(range(memory_size)):
         next_values = values[i + 1] if i < memory_size - 1 else next_values
         advantage = (
-            rewards[i]
-            - values[i]
-            + discount_factor * not_done[i] * (next_values + lambda_coefficient * advantage)
+            rewards[i] - values[i] + discount_factor * not_done[i] * (next_values + lambda_coefficient * advantage)
         )
         advantages[i] = advantage
     # returns computation

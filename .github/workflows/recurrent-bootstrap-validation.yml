@@ -14,7 +14,8 @@ jobs:
     timeout-minutes: 25
     env:
       BASE_SHA: c0ad68a1e3feb4d288570db87403648074cabdb7
-      CANDIDATE_SHA: b2b6d7a53f2d01b150acdbd23ee55aa06ff57e52
+      CANDIDATE_SHA: ab4680debbfc104c19544d030e1cd201f776a390
+      PYTHONPATH: .
       OMP_NUM_THREADS: 1
       OPENBLAS_NUM_THREADS: 1
       MKL_NUM_THREADS: 1
