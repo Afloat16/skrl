@@ -27,25 +27,29 @@ def compute_gae(
     *,
     rewards: Tensor,
     terminated: Tensor,
+    truncated: Tensor,
     values: Tensor,
     next_values: Tensor,
     discount_factor: float = 0.99,
     lambda_coefficient: float = 0.95,
+    time_limit_bootstrap: bool = False,
 ) -> Tensor:
     """Compute the Generalized Advantage Estimator (GAE).
 
     :param rewards: Rewards obtained by the agent.
     :param terminated: Signals to indicate that episodes have ended.
+    :param truncated: Signals to indicate that episodes have been truncated.
     :param values: Values obtained by the agent.
     :param next_values: Next values obtained by the agent.
     :param discount_factor: Discount factor.
     :param lambda_coefficient: Lambda coefficient.
+    :param time_limit_bootstrap: Whether to use time-limit (truncation) bootstrapping.
 
     :return: Generalized Advantage Estimator.
     """
     advantage = 0
     advantages = torch.zeros_like(rewards)
-    not_terminated = terminated.logical_not()
+    not_done = ((terminated | truncated) if time_limit_bootstrap else terminated).logical_not()
     memory_size = rewards.shape[0]
 
     # advantages computation
@@ -54,7 +58,7 @@ def compute_gae(
         advantage = (
             rewards[i]
             - values[i]
-            + discount_factor * not_terminated[i] * (next_values + lambda_coefficient * advantage)
+            + discount_factor * not_done[i] * (next_values + lambda_coefficient * advantage)
         )
         advantages[i] = advantage
     # returns computation
@@ -327,8 +331,21 @@ class PPO_RNN(Agent):
                 values = self._value_preprocessor(values, inverse=True)
 
             # time-limit (truncation) bootstrapping
-            if self.cfg.time_limit_bootstrap:
-                rewards += self.cfg.discount_factor * values * truncated
+            if self.cfg.time_limit_bootstrap and truncated.any():
+                with torch.no_grad(), torch.autocast(device_type=self._device_type, enabled=self.cfg.mixed_precision):
+                    inputs = {
+                        "observations": self._observation_preprocessor(next_observations),
+                        "states": self._state_preprocessor(next_states),
+                    }
+                    if self._rnn:
+                        next_rnn_states = (
+                            self._rnn_final_states["policy"] if self.policy is self.value else outputs.get("rnn", [])
+                        )
+                        inputs["rnn"] = next_rnn_states
+                    next_values, _ = self.value.act(inputs, role="value")
+                    next_values = self._value_preprocessor(next_values, inverse=True)
+
+                rewards += self.cfg.discount_factor * next_values * truncated
 
             # package RNN states
             rnn_states = {}
@@ -422,10 +439,12 @@ class PPO_RNN(Agent):
         returns, advantages = compute_gae(
             rewards=self.memory.get_tensor_by_name("rewards"),
             terminated=self.memory.get_tensor_by_name("terminated"),
+            truncated=self.memory.get_tensor_by_name("truncated"),
             values=values,
             next_values=last_values,
             discount_factor=self.cfg.discount_factor,
             lambda_coefficient=self.cfg.gae_lambda,
+            time_limit_bootstrap=self.cfg.time_limit_bootstrap,
         )
 
         self.memory.set_tensor_by_name("values", self._value_preprocessor(values, train=True))
