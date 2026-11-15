@@ -328,7 +328,7 @@ class PPO_RNN(Agent):
 
             # time-limit (truncation) bootstrapping
             if self.cfg.time_limit_bootstrap:
-                rewards += self.cfg.discount_factor * values * truncated
+                rewards += self.cfg.discount_factor * values * (truncated & ~terminated)
 
             # package RNN states
             rnn_states = {}
