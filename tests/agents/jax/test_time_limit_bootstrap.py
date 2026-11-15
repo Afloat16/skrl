@@ -66,7 +66,7 @@ def test_terminal_truncation_rewards(name, bootstrap, flag_dtype):
         next_states=None,
         terminated=terminated,
         truncated=truncated,
-        infos={"amp_obs": observations},
+        infos={},
         timestep=0,
         timesteps=1,
     )
@@ -127,4 +127,3 @@ def test_multi_agent_terminal_truncation_rewards(name, bootstrap, flag_dtype):
     expected = jnp.array([1.0, 1.0, 6.0 if bootstrap else 1.0, 1.0]).reshape(1, 4, 1)
     np.testing.assert_allclose(memories["first"].get_tensor_by_name("rewards"), expected)
     np.testing.assert_allclose(memories["second"].get_tensor_by_name("rewards"), expected[:, ::-1])
-

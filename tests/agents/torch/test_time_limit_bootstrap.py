@@ -201,9 +201,7 @@ def test_ppo_time_limit_terminal_returns(bootstrap):
         )
     agent.post_interaction(timestep=0, timesteps=1)
     # A time limit must not introduce a continuation value at a true terminal state.
-    torch.testing.assert_close(
-        memory.get_tensor_by_name("returns"), torch.tensor([6.0, 1.0, 6.0, 1.0]).view(1, 4, 1)
-    )
+    torch.testing.assert_close(memory.get_tensor_by_name("returns"), torch.tensor([6.0, 1.0, 6.0, 1.0]).view(1, 4, 1))
     assert any(not torch.equal(old, new) for old, new in zip(before, models["value"].parameters()))
     assert all(torch.isfinite(parameter).all() for parameter in models["value"].parameters())
     for env in envs:
