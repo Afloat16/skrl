@@ -108,6 +108,8 @@ class TD3(Agent):
             self.scaler = torch.amp.GradScaler(device=self._device_type, enabled=self.cfg.mixed_precision)
         else:
             self.scaler = torch.cuda.amp.GradScaler(enabled=self.cfg.mixed_precision)
+        if self.scaler.is_enabled():
+            self.checkpoint_modules["scaler"] = self.scaler
 
         # set up optimizers and learning rate schedulers
         if self.policy is not None and self.critic_1 is not None and self.critic_2 is not None:

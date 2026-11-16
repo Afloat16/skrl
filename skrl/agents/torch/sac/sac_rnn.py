@@ -90,6 +90,8 @@ class SAC_RNN(Agent):
             self.scaler = torch.amp.GradScaler(device=self._device_type, enabled=self.cfg.mixed_precision)
         else:
             self.scaler = torch.cuda.amp.GradScaler(enabled=self.cfg.mixed_precision)
+        if self.scaler.is_enabled():
+            self.checkpoint_modules["scaler"] = self.scaler
 
         # entropy
         self._entropy_coefficient = self.cfg.initial_entropy_value

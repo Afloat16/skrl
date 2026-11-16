@@ -130,6 +130,9 @@ class MAPPO(MultiAgent):
             self.scaler = torch.amp.GradScaler(device=self._device_type, enabled=self.cfg.mixed_precision)
         else:
             self.scaler = torch.cuda.amp.GradScaler(enabled=self.cfg.mixed_precision)
+        if self.scaler.is_enabled():
+            for uid in self.possible_agents:
+                self.checkpoint_modules[uid]["scaler"] = self.scaler
 
         # set up optimizer and learning rate scheduler
         self.optimizers = {}

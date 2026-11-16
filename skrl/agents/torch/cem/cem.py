@@ -67,6 +67,8 @@ class CEM(Agent):
             self.scaler = torch.amp.GradScaler(device=self._device_type, enabled=self.cfg.mixed_precision)
         else:
             self.scaler = torch.cuda.amp.GradScaler(enabled=self.cfg.mixed_precision)
+        if self.scaler.is_enabled():
+            self.checkpoint_modules["scaler"] = self.scaler
 
         # set up optimizer and learning rate scheduler
         if self.policy is not None:
