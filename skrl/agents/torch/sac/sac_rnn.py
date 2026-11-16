@@ -92,6 +92,7 @@ class SAC_RNN(Agent):
             self.scaler = torch.cuda.amp.GradScaler(enabled=self.cfg.mixed_precision)
 
         # entropy
+        self.entropy_scheduler = None
         self._entropy_coefficient = self.cfg.initial_entropy_value
         if self.cfg.learn_entropy:
             self._target_entropy = self.cfg.target_entropy
@@ -109,6 +110,11 @@ class SAC_RNN(Agent):
             self.entropy_optimizer = torch.optim.Adam([self.log_entropy_coefficient], lr=self.cfg.learning_rate[2])
 
             self.checkpoint_modules["entropy_optimizer"] = self.entropy_optimizer
+            if self.cfg.learning_rate_scheduler[2] is not None:
+                self.entropy_scheduler = self.cfg.learning_rate_scheduler[2](
+                    self.entropy_optimizer, **self.cfg.learning_rate_scheduler_kwargs[2]
+                )
+                self.checkpoint_modules["entropy_scheduler"] = self.entropy_scheduler
 
         # set up optimizers and learning rate schedulers
         if self.policy is not None and self.critic_1 is not None and self.critic_2 is not None:
@@ -482,6 +488,8 @@ class SAC_RNN(Agent):
                 self.policy_scheduler.step()
             if self.critic_scheduler:
                 self.critic_scheduler.step()
+            if self.entropy_scheduler:
+                self.entropy_scheduler.step()
 
             # record data
             if self.write_interval > 0:
@@ -508,3 +516,5 @@ class SAC_RNN(Agent):
                     self.track_data("Learning / Policy learning rate", self.policy_scheduler.get_last_lr()[0])
                 if self.critic_scheduler:
                     self.track_data("Learning / Critic learning rate", self.critic_scheduler.get_last_lr()[0])
+                if self.entropy_scheduler:
+                    self.track_data("Learning / Entropy learning rate", self.entropy_scheduler.get_last_lr()[0])
