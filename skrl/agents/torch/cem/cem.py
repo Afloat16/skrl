@@ -77,6 +77,7 @@ class CEM(Agent):
             self.scheduler = self.cfg.learning_rate_scheduler
             if self.scheduler is not None:
                 self.scheduler = self.scheduler(self.optimizer, **self.cfg.learning_rate_scheduler_kwargs)
+                self.checkpoint_modules["scheduler"] = self.scheduler
 
         # set up preprocessors
         # - observations

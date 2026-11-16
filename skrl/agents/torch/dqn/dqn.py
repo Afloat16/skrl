@@ -85,6 +85,7 @@ class DQN(Agent):
             self.scheduler = self.cfg.learning_rate_scheduler
             if self.scheduler is not None:
                 self.scheduler = self.scheduler(self.optimizer, **self.cfg.learning_rate_scheduler_kwargs)
+                self.checkpoint_modules["scheduler"] = self.scheduler
 
         # set up target networks
         if self.target_q_network is not None:

@@ -153,6 +153,7 @@ class IPPO(MultiAgent):
                     self.schedulers[uid] = self.cfg.learning_rate_scheduler[uid][0](
                         self.optimizers[uid], **self.cfg.learning_rate_scheduler_kwargs[uid][0]
                     )
+                    self.checkpoint_modules[uid]["scheduler"] = self.schedulers[uid]
 
         # set up preprocessors
         self._observation_preprocessor = {}

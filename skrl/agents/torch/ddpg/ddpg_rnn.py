@@ -107,10 +107,12 @@ class DDPG_RNN(Agent):
                 self.policy_scheduler = self.policy_scheduler(
                     self.policy_optimizer, **self.cfg.learning_rate_scheduler_kwargs[0]
                 )
+                self.checkpoint_modules["policy_scheduler"] = self.policy_scheduler
             if self.critic_scheduler is not None:
                 self.critic_scheduler = self.critic_scheduler(
                     self.critic_optimizer, **self.cfg.learning_rate_scheduler_kwargs[1]
                 )
+                self.checkpoint_modules["critic_scheduler"] = self.critic_scheduler
 
         # set up target networks
         if self.target_policy is not None and self.target_critic is not None:

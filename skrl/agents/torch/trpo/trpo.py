@@ -248,6 +248,7 @@ class TRPO(Agent):
                 self.value_scheduler = self.value_scheduler(
                     self.value_optimizer, **self.cfg.learning_rate_scheduler_kwargs
                 )
+                self.checkpoint_modules["value_scheduler"] = self.value_scheduler
 
         # set up preprocessors
         # - observations
