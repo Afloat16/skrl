@@ -288,19 +288,35 @@ class Memory(ABC):
         pass
 
     def sample_by_index(
-        self, names: list[str], *, indexes: list | np.ndarray | Tensor, mini_batches: int = 1
+        self,
+        names: list[str],
+        *,
+        indexes: list | np.ndarray | Tensor,
+        mini_batches: int = 1,
+        sequence_length: int = 1,
     ) -> list[list[Tensor]]:
         """Sample data from memory according to their indexes.
 
         :param names: Tensors names from which to obtain the samples.
         :param indexes: Indexes used for sampling.
         :param mini_batches: Number of mini-batches to sample.
+        :param sequence_length: Number of consecutive indexes belonging to each sequence.
+            Mini-batch boundaries preserve complete sequences.
 
         :return: Sampled data from tensors sorted according to their position in the list of names.
             The sampled tensors will have the following shape: ``(number_of_indexes, data_size)``.
+
+        :raises ValueError: Indexes do not contain complete sequences.
         """
+        if sequence_length > 1 and len(indexes) % sequence_length:
+            raise ValueError("The number of indexes must be divisible by sequence_length")
         if mini_batches > 1:
-            batches = np.array_split(indexes, mini_batches)
+            if sequence_length > 1:
+                batch_size, remainder = divmod(len(indexes) // sequence_length, mini_batches)
+                boundaries = [sequence_length * (batch_size * i + min(i, remainder)) for i in range(mini_batches + 1)]
+                batches = [indexes[start:end] for start, end in zip(boundaries[:-1], boundaries[1:])]
+            else:
+                batches = np.array_split(indexes, mini_batches)
             return [
                 [self.tensors_view[name][batch] if name in self.tensors else None for name in names]
                 for batch in batches
@@ -316,18 +332,16 @@ class Memory(ABC):
 
         :return: Sampled data from memory.
             The sampled tensors will have the following shape: ``(memory_size * number_of_environments, data_size)``.
+
+        :raises ValueError: ``memory_size`` is not divisible by ``sequence_length``.
         """
         # sequential order
         if sequence_length > 1:
-            if mini_batches > 1:
-                batches = np.array_split(self.all_sequence_indexes, mini_batches)
-                return [
-                    [self.tensors_view[name][batch] if name in self.tensors else None for name in names]
-                    for batch in batches
-                ]
-            return [
-                [self.tensors_view[name][self.all_sequence_indexes] if name in self.tensors else None for name in names]
-            ]
+            if self.memory_size % sequence_length:
+                raise ValueError("memory_size must be divisible by sequence_length")
+            return self.sample_by_index(
+                names, indexes=self.all_sequence_indexes, mini_batches=mini_batches, sequence_length=sequence_length
+            )
         # default order
         if mini_batches > 1:
             batch_size = (self.memory_size * self.num_envs) // mini_batches

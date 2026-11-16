@@ -79,4 +79,6 @@ class RandomMemory(Memory):
             indexes = (sequence_indexes.repeat(indexes.shape[0], 1) + indexes.view(-1, 1)).view(-1)
         # sample by indexes
         self.sampling_indexes = indexes
-        return self.sample_by_index(names=names, indexes=indexes, mini_batches=mini_batches)
+        return self.sample_by_index(
+            names=names, indexes=indexes, mini_batches=mini_batches, sequence_length=sequence_length
+        )
