@@ -118,7 +118,7 @@ class StepTrainer(Trainer):
                         self.observations[scope[0] : scope[1]],
                         self.states[scope[0] : scope[1]] if self.states is not None else None,
                         timestep=timestep,
-                        timesteps=self.cfg.timesteps,
+                        timesteps=timesteps,
                     )
                     agent.track_data("Stats / Inference time (ms)", timer.elapsed_time_ms)
                 _actions.append(actions)
@@ -243,7 +243,7 @@ class StepTrainer(Trainer):
                         self.observations[scope[0] : scope[1]],
                         self.states[scope[0] : scope[1]] if self.states is not None else None,
                         timestep=timestep,
-                        timesteps=self.cfg.timesteps,
+                        timesteps=timesteps,
                     )
                     agent.track_data("Stats / Inference time (ms)", timer.elapsed_time_ms)
                 _actions.append(actions if self.cfg.stochastic_evaluation else outputs.get("mean_actions", actions))
@@ -275,7 +275,7 @@ class StepTrainer(Trainer):
                     truncated=truncated[scope[0] : scope[1]],
                     infos=infos,
                     timestep=timestep,
-                    timesteps=self.cfg.timesteps,
+                    timesteps=timesteps,
                 )
 
             # log environment info
@@ -287,7 +287,7 @@ class StepTrainer(Trainer):
 
         # post-interaction
         for agent in self.agents:
-            super(agent.__class__, agent).post_interaction(timestep=timestep, timesteps=self.cfg.timesteps)
+            super(agent.__class__, agent).post_interaction(timestep=timestep, timesteps=timesteps)
 
         # reset environments
         # - parallel/vectorized environments (single or multi-agent)
