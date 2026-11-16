@@ -114,6 +114,8 @@ def tensorize_space(space: spaces.Space | None, x: Any, *, device: Device = None
 def untensorize_space(space: spaces.Space | None, x: Any, *, squeeze_batch_dimension: bool = True) -> Any:
     """Convert a tensorized space to a gymnasium space with expected sample/value item types.
 
+    Tensor inputs are detached for conversion without changing their original autograd history.
+
     :param space: Gymnasium space.
     :param x: Tensorized space (sample/value space where items are tensors).
     :param squeeze_batch_dimension: Whether to remove the batch dimension.
@@ -130,6 +132,7 @@ def untensorize_space(space: spaces.Space | None, x: Any, *, squeeze_batch_dimen
     # - Box
     elif isinstance(space, spaces.Box):
         if isinstance(x, torch.Tensor):
+            x = x.detach()
             # avoid TypeError: Got unsupported ScalarType BFloat16
             if x.dtype == torch.bfloat16:
                 array = np.array(x.to(dtype=torch.float32).cpu().numpy(), dtype=space.dtype)
@@ -142,6 +145,7 @@ def untensorize_space(space: spaces.Space | None, x: Any, *, squeeze_batch_dimen
     # - Discrete
     elif isinstance(space, spaces.Discrete):
         if isinstance(x, torch.Tensor):
+            x = x.detach()
             # avoid TypeError: Got unsupported ScalarType BFloat16
             if x.dtype == torch.bfloat16:
                 array = np.array(x.to(dtype=torch.float32).cpu().numpy(), dtype=space.dtype)
@@ -154,6 +158,7 @@ def untensorize_space(space: spaces.Space | None, x: Any, *, squeeze_batch_dimen
     # - MultiDiscrete
     elif isinstance(space, spaces.MultiDiscrete):
         if isinstance(x, torch.Tensor):
+            x = x.detach()
             # avoid TypeError: Got unsupported ScalarType BFloat16
             if x.dtype == torch.bfloat16:
                 array = np.array(x.to(dtype=torch.float32).cpu().numpy(), dtype=space.dtype)
