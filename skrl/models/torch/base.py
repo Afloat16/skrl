@@ -370,8 +370,11 @@ class Model(torch.nn.Module, ABC):
             # soft update (use in-place operations to avoid creating new parameters)
             else:
                 for parameters, model_parameters in zip(self.parameters(), model.parameters()):
+                    # A shared parameter already equals its source value.
+                    if parameters is model_parameters:
+                        continue
                     parameters.data.mul_(1 - polyak)
-                    parameters.data.add_(polyak * model_parameters.data)
+                    parameters.data.add_(model_parameters.data, alpha=polyak)
 
     def broadcast_parameters(self, *, rank: int = 0) -> None:
         """Broadcast model parameters to the whole group (e.g.: across all nodes) in distributed runs.
