@@ -180,6 +180,8 @@ def untensorize_space(space: spaces.Space | None, x: Any, *, squeeze_batch_dimen
 def flatten_tensorized_space(x: Any) -> Tensor | None:
     """Flatten a tensorized space.
 
+    Tensor items retain their leading batch dimension. A one-dimensional item is a batch of scalar values.
+
     :param x: Tensorized space sample/value.
 
     :return: A tensor. The returned tensor will have shape (batch, space size),
@@ -191,7 +193,7 @@ def flatten_tensorized_space(x: Any) -> Tensor | None:
         return None
     # fundamental spaces (Box, Discrete and MultiDiscrete)
     elif isinstance(x, torch.Tensor):
-        return x.reshape(x.shape[0], -1) if x.ndim > 1 else x.reshape(1, -1)
+        return x.flatten(start_dim=1) if x.ndim > 1 else x.reshape(-1, 1)
     # composite spaces
     # - Tuple
     elif type(x) in [list, tuple]:
