@@ -280,7 +280,8 @@ class MultiAgent(ABC):
         :param tag: Data identifier (e.g. 'Loss/Policy loss').
         :param value: Value to track.
         """
-        self.tracking_data[tag].append(value)
+        if self.write_interval > 0:
+            self.tracking_data[tag].append(value)
 
     def write_tracking_data(self, *, timestep: int, timesteps: int) -> None:
         """Write tracking data to TensorBoard.
@@ -391,8 +392,8 @@ class MultiAgent(ABC):
 
         .. note::
 
-            This method keeps track of the episode rewards (instantaneous and cumulative) and timesteps
-            when ``experiment.write_interval`` configuration is resolved to a positive value.
+            This method keeps track of episode rewards and timesteps when logging or checkpointing is enabled.
+            With logging disabled, best checkpoints use the mean reward of the latest 100 completed episodes.
             Inheriting classes must call this method to record such information.
 
         :param observations: Environment observations.
@@ -407,7 +408,7 @@ class MultiAgent(ABC):
         :param timestep: Current timestep.
         :param timesteps: Number of timesteps.
         """
-        if self.write_interval > 0:
+        if self.write_interval > 0 or self.checkpoint_interval > 0:
             _rewards = sum(rewards.values())
 
             # compute the cumulative sum of the rewards and timesteps
@@ -431,6 +432,9 @@ class MultiAgent(ABC):
                 # reset the cumulative rewards and timesteps
                 self._cumulative_rewards[finished_episodes] = 0
                 self._cumulative_timesteps[finished_episodes] = 0
+
+            if self.write_interval <= 0:
+                return
 
             # record data
             self.tracking_data["Reward / Instantaneous reward (max)"].append(torch.max(_rewards).item())
@@ -534,6 +538,8 @@ class MultiAgent(ABC):
         if timestep > 1 and self.checkpoint_interval > 0 and not timestep % self.checkpoint_interval:
             # update best models
             reward = np.mean(self.tracking_data.get("Reward / Total reward (mean)", -(2**31)))
+            if self.write_interval <= 0 and self._track_rewards:
+                reward = np.mean(self._track_rewards)
             if reward > self.checkpoint_best_modules["reward"]:
                 self.checkpoint_best_modules["timestep"] = timestep
                 self.checkpoint_best_modules["reward"] = reward
