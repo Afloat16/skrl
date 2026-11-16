@@ -224,7 +224,9 @@ class MultiAgent(ABC):
 
         :param trainer_cfg: Trainer configuration.
         """
-        trainer_cfg = {} if trainer_cfg is None else dataclasses.asdict(trainer_cfg)
+        if dataclasses.is_dataclass(trainer_cfg):
+            trainer_cfg = dataclasses.asdict(trainer_cfg)
+        trainer_cfg = {} if trainer_cfg is None else trainer_cfg
 
         # resolve the data tracking and checkpointing intervals
         write_interval = self.cfg.experiment.write_interval
