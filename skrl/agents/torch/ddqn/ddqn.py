@@ -158,14 +158,15 @@ class DDQN(Agent):
             "states": self._state_preprocessor(states),
         }
 
+        if timestep < self.cfg.random_timesteps:
+            return self.q_network.random_act(inputs, role="q_network")
+
         if self.cfg.exploration_scheduler is None:
             q_values, outputs = self.q_network.act(inputs, role="q_network")
             return torch.argmax(q_values, dim=1, keepdim=True), outputs
 
         # sample random actions
         actions, outputs = self.q_network.random_act(inputs, role="q_network")
-        if timestep < self.cfg.random_timesteps:
-            return actions, outputs
 
         # sample actions with epsilon-greedy policy
         epsilon = self.cfg.exploration_scheduler(timestep, timesteps)
