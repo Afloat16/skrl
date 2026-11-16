@@ -121,6 +121,8 @@ def conjugate_gradient(
     r = b.clone()
     p = b.clone()
     rr_old = torch.dot(r, r)
+    if rr_old <= residual_tolerance:
+        return x
     for _ in range(num_iterations):
         hv = fisher_vector_product(
             policy=policy, observations=observations, states=states, rnn=rnn, vector=p, damping=damping
@@ -129,7 +131,7 @@ def conjugate_gradient(
         x += alpha * p
         r -= alpha * hv
         rr_new = torch.dot(r, r)
-        if rr_new < residual_tolerance:
+        if rr_new <= residual_tolerance:
             break
         p = r + rr_new / rr_old * p
         rr_old = rr_new
@@ -630,7 +632,7 @@ class TRPO_RNN(Agent):
                 damping=self.cfg.damping,
             )
         ).sum(0, keepdim=True)
-        step_size = torch.sqrt(2 * self.cfg.max_kl_divergence / xHx)[0]
+        step_size = torch.sqrt(2 * self.cfg.max_kl_divergence / xHx)[0] if xHx > 0 else 0.0
         full_step = step_size * search_direction
 
         # backtracking line search
@@ -640,7 +642,12 @@ class TRPO_RNN(Agent):
 
         expected_improvement = (flat_policy_loss_gradient * full_step).sum(0, keepdim=True)
 
-        for alpha in [self.cfg.step_fraction * 0.5**i for i in range(self.cfg.max_backtrack_steps)]:
+        alphas = (
+            [self.cfg.step_fraction * 0.5**i for i in range(self.cfg.max_backtrack_steps)]
+            if expected_improvement > 0
+            else []
+        )
+        for alpha in alphas:
             new_params = params + alpha * full_step
             vector_to_parameters(new_params, self.policy.parameters())
 
