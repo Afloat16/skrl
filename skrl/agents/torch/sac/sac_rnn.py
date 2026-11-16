@@ -466,6 +466,9 @@ class SAC_RNN(Agent):
                 # optimization step (entropy)
                 self.entropy_optimizer.zero_grad()
                 self.scaler.scale(entropy_loss).backward()
+                if config.torch.is_distributed:
+                    torch.distributed.all_reduce(self.log_entropy_coefficient.grad, op=torch.distributed.ReduceOp.SUM)
+                    self.log_entropy_coefficient.grad.div_(config.torch.world_size)
                 self.scaler.step(self.entropy_optimizer)
 
                 # compute entropy coefficient
