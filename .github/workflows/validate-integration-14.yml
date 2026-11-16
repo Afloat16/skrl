@@ -1,0 +1,83 @@
+name: Validate fourteen independent improvements
+
+on:
+  push:
+    branches:
+      - validation/integration-14-20261116
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Combine exact published commits
+        run: |
+          git fetch --no-tags --depth=2 origin d4b9556455c4dcc780ed72a148a5b7433a18b0e7 09c5688074c47a5ce50013e477c4ec819f537a0a 5551bc8937e1245ef983c69033b680f116e5fc61 b603cf97192cfbe2ade6600869fd7bd3de741931 b2e7420da83b9f4c9fc6627f1534ad062aa5dc5d 3fd5a0dcb5418a122adc9839be1677389f944564 c9e0a47cd18d63bbce6998511e19a1b145a6508a c8b4fd90b5397dd213e3d8612048557f3a5f3aaa 2fd12f5fceff8987c3fe88af34f19e56e92c95b4 92dddae09eddf30f3fb1b4c95aebf7e13e590d2c d38b8771c611abea4993ff656d2912dfda872dca 16bdc00072540d3ebd80c9b8a67a75125ada24f8 92eb0d7ffd62688608ae482d8fa51a0dc58dbb84 756802b03c54bcd78688e87ff4c2c9dbbc481bb4
+          for head in d4b9556455c4dcc780ed72a148a5b7433a18b0e7 09c5688074c47a5ce50013e477c4ec819f537a0a 5551bc8937e1245ef983c69033b680f116e5fc61 b603cf97192cfbe2ade6600869fd7bd3de741931 b2e7420da83b9f4c9fc6627f1534ad062aa5dc5d 3fd5a0dcb5418a122adc9839be1677389f944564 c9e0a47cd18d63bbce6998511e19a1b145a6508a c8b4fd90b5397dd213e3d8612048557f3a5f3aaa 2fd12f5fceff8987c3fe88af34f19e56e92c95b4 92dddae09eddf30f3fb1b4c95aebf7e13e590d2c d38b8771c611abea4993ff656d2912dfda872dca 16bdc00072540d3ebd80c9b8a67a75125ada24f8 92eb0d7ffd62688608ae482d8fa51a0dc58dbb84 756802b03c54bcd78688e87ff4c2c9dbbc481bb4; do
+            git cherry-pick --no-commit "$head"
+          done
+          git diff --cached --check
+          git diff --cached --binary > combined.patch
+          git diff --cached --stat
+          python - <<'PY'
+          import json, subprocess
+          expected = ["skrl/agents/torch/a2c/a2c.py","skrl/agents/torch/a2c/a2c_rnn.py","skrl/agents/torch/amp/amp.py","skrl/agents/torch/base.py","skrl/agents/torch/cem/cem.py","skrl/agents/torch/ddpg/ddpg.py","skrl/agents/torch/ddpg/ddpg_rnn.py","skrl/agents/torch/ddqn/ddqn.py","skrl/agents/torch/dqn/dqn.py","skrl/agents/torch/ppo/ppo.py","skrl/agents/torch/ppo/ppo_rnn.py","skrl/agents/torch/rpo/rpo.py","skrl/agents/torch/rpo/rpo_rnn.py","skrl/agents/torch/sac/sac.py","skrl/agents/torch/sac/sac_rnn.py","skrl/agents/torch/td3/td3.py","skrl/agents/torch/td3/td3_rnn.py","skrl/agents/torch/trpo/trpo.py","skrl/agents/torch/trpo/trpo_rnn.py","skrl/memories/torch/base.py","skrl/models/torch/categorical.py","skrl/models/torch/gaussian.py","skrl/models/torch/multicategorical.py","skrl/models/torch/multivariate_gaussian.py","skrl/multi_agents/torch/base.py","skrl/multi_agents/torch/ippo/ippo.py","skrl/multi_agents/torch/mappo/mappo.py","skrl/resources/noises/torch/gaussian.py","skrl/resources/noises/torch/ornstein_uhlenbeck.py","skrl/resources/preprocessors/torch/running_standard_scaler.py","skrl/trainers/torch/step.py","skrl/utils/__init__.py","skrl/utils/spaces/torch/spaces.py","tests/agents/torch/test_actor_gradients.py","tests/agents/torch/test_disabled_logging.py","tests/agents/torch/test_dqn_warmup.py","tests/agents/torch/test_replay_gradients.py","tests/agents/torch/test_sac_entropy_scheduler.py","tests/agents/torch/test_scaler_precision.py","tests/agents/torch/test_scheduler_checkpoints.py","tests/agents/torch/test_trainer_configuration.py","tests/agents/torch/test_trpo_zero_gradient.py","tests/trainers/torch/test_step_budget.py","tests/utils/distributed/torch/test_sac_entropy.py","tests/utils/framework/torch/test_seed.py","tests/utils/model_instantiators/torch/test_distribution_validation.py","tests/utils/spaces/torch/test_scalar_batches.py"]
+          paths = subprocess.check_output(["git", "diff", "--cached", "--name-only"], text=True).splitlines()
+          assert sorted(paths) == expected, paths
+          source_hashes = {path: subprocess.check_output(["git", "hash-object", path], text=True).strip() for path in paths}
+          evidence = {"base": "c0ad68a1e3feb4d288570db87403648074cabdb7", "commits": [{"id":1,"sha":"d4b9556455c4dcc780ed72a148a5b7433a18b0e7"},{"id":2,"sha":"09c5688074c47a5ce50013e477c4ec819f537a0a"},{"id":3,"sha":"5551bc8937e1245ef983c69033b680f116e5fc61"},{"id":4,"sha":"b603cf97192cfbe2ade6600869fd7bd3de741931"},{"id":5,"sha":"b2e7420da83b9f4c9fc6627f1534ad062aa5dc5d"},{"id":6,"sha":"3fd5a0dcb5418a122adc9839be1677389f944564"},{"id":7,"sha":"c9e0a47cd18d63bbce6998511e19a1b145a6508a"},{"id":8,"sha":"c8b4fd90b5397dd213e3d8612048557f3a5f3aaa"},{"id":9,"sha":"2fd12f5fceff8987c3fe88af34f19e56e92c95b4"},{"id":10,"sha":"92dddae09eddf30f3fb1b4c95aebf7e13e590d2c"},{"id":11,"sha":"d38b8771c611abea4993ff656d2912dfda872dca"},{"id":12,"sha":"16bdc00072540d3ebd80c9b8a67a75125ada24f8"},{"id":13,"sha":"92eb0d7ffd62688608ae482d8fa51a0dc58dbb84"},{"id":14,"sha":"756802b03c54bcd78688e87ff4c2c9dbbc481bb4"}], "source_hashes": source_hashes, "conflicts": 0}
+          open("combined-source.json", "w").write(json.dumps(evidence, indent=2))
+          print(json.dumps(evidence, indent=2))
+          PY
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install CPU dependencies
+        run: |
+          python -m pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --no-cache-dir -e . numpy==1.26.4 pytest==8.3.5 hypothesis==6.130.4 gymnasium==1.4.0 gym==0.26.2 pyyaml black==24.8.0 isort==5.13.2
+      - name: Check combined source formatting
+        run: |
+          python - <<'PY'
+          import ast, pathlib, subprocess, sys
+          paths = subprocess.check_output(["git", "diff", "--cached", "--name-only"], text=True).splitlines()
+          for path in paths:
+              ast.parse(pathlib.Path(path).read_text())
+          subprocess.run([sys.executable, "-m", "black", "--check", *paths], check=True)
+          subprocess.run([sys.executable, "-m", "isort", "--check-only", *paths], check=True)
+          PY
+      - name: Validate combined CPU behavior
+        run: |
+          python -m pytest tests/agents/torch/test_actor_gradients.py tests/agents/torch/test_disabled_logging.py tests/agents/torch/test_dqn_warmup.py tests/agents/torch/test_replay_gradients.py tests/agents/torch/test_sac_entropy_scheduler.py tests/agents/torch/test_scaler_precision.py tests/agents/torch/test_scheduler_checkpoints.py tests/agents/torch/test_trainer_configuration.py tests/agents/torch/test_trpo_zero_gradient.py tests/trainers/torch/test_step_budget.py tests/agents/torch/test_trpo.py tests/agents/torch/test_dqn.py tests/agents/torch/test_ddqn.py tests/agents/torch/test_ddpg.py tests/agents/torch/test_sac.py tests/agents/torch/test_td3.py tests/agents/torch/test_ppo.py tests/multi_agents/torch/test_ippo.py tests/multi_agents/torch/test_mappo.py tests/trainers/torch/test_step.py tests/trainers/torch/test_sequential.py tests/utils/framework/torch tests/utils/spaces/torch tests/utils/model_instantiators/torch tests/utils/distributed/torch -q --tb=short --hypothesis-seed=0 --junitxml=combined.xml > combined.log 2>&1
+          cat combined.log
+      - name: Print test evidence
+        if: always()
+        run: |
+          if test -f combined.log; then tail -n 140 combined.log; fi
+          python - <<'PY'
+          import json, pathlib, xml.etree.ElementTree as ET
+          if pathlib.Path("combined.xml").exists():
+              suites = ET.parse("combined.xml").getroot()
+              print(json.dumps([suite.attrib for suite in suites], indent=2))
+          PY
+      - name: Save exact validation output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fourteen-improvements-validation
+          path: |
+            combined.patch
+            combined-source.json
+            combined.log
+            combined.xml
+          retention-days: 7
