@@ -8,10 +8,6 @@ from torch.distributions import Categorical
 from skrl.utils.framework.torch.types import Tensor
 
 
-# speed up distribution construction by disabling checking
-Categorical.set_default_validate_args(False)
-
-
 class CategoricalMixin:
     def __init__(self, *, unnormalized_log_prob: bool = True, role: str = "") -> None:
         """Categorical mixin model (stochastic model).
@@ -45,10 +41,10 @@ class CategoricalMixin:
 
         # unnormalized log probabilities
         if self._c_unnormalized_log_prob:
-            self._c_distribution = Categorical(logits=net_output)
+            self._c_distribution = Categorical(logits=net_output, validate_args=False)
         # normalized probabilities
         else:
-            self._c_distribution = Categorical(probs=net_output)
+            self._c_distribution = Categorical(probs=net_output, validate_args=False)
 
         # actions and log of the probability density function
         actions = self._c_distribution.sample()

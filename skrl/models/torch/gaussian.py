@@ -9,10 +9,6 @@ from skrl.utils.framework.torch.types import Tensor
 from skrl.utils.spaces.torch import compute_space_limits
 
 
-# speed up distribution construction by disabling checking
-Normal.set_default_validate_args(False)
-
-
 class GaussianMixin:
     def __init__(
         self,
@@ -91,7 +87,7 @@ class GaussianMixin:
             outputs["log_std"] = log_std
 
         # distribution
-        self._g_distribution = Normal(mean_actions, log_std.exp())
+        self._g_distribution = Normal(mean_actions, log_std.exp(), validate_args=False)
 
         # sample using the reparameterization trick
         actions = self._g_distribution.rsample()

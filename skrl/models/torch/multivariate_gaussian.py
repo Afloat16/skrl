@@ -9,10 +9,6 @@ from skrl.utils.framework.torch.types import Tensor
 from skrl.utils.spaces.torch import compute_space_limits
 
 
-# speed up distribution construction by disabling checking
-MultivariateNormal.set_default_validate_args(False)
-
-
 class MultivariateGaussianMixin:
     def __init__(
         self,
@@ -78,7 +74,7 @@ class MultivariateGaussianMixin:
 
         # distribution
         scale_tril = torch.diag_embed(log_std.exp())
-        self._mg_distribution = MultivariateNormal(mean_actions, scale_tril=scale_tril)
+        self._mg_distribution = MultivariateNormal(mean_actions, scale_tril=scale_tril, validate_args=False)
 
         # sample using the reparameterization trick
         actions = self._mg_distribution.rsample()

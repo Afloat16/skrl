@@ -7,10 +7,6 @@ from skrl.resources.noises.torch import Noise
 from skrl.utils.framework.torch.types import Device, Tensor
 
 
-# speed up distribution construction by disabling checking
-Normal.set_default_validate_args(False)
-
-
 class GaussianNoise(Noise):
     def __init__(self, *, mean: float, std: float, device: Device = None) -> None:
         """Gaussian noise.
@@ -28,6 +24,7 @@ class GaussianNoise(Noise):
         self.distribution = Normal(
             loc=torch.tensor(mean, device=self.device, dtype=torch.float32),
             scale=torch.tensor(std, device=self.device, dtype=torch.float32),
+            validate_args=False,
         )
 
     def sample(self, size: list[int] | torch.Size) -> Tensor:

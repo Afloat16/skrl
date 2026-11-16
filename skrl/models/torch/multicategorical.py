@@ -8,10 +8,6 @@ from torch.distributions import Categorical
 from skrl.utils.framework.torch.types import Tensor
 
 
-# speed up distribution construction by disabling checking
-Categorical.set_default_validate_args(False)
-
-
 class MultiCategoricalMixin:
     def __init__(
         self,
@@ -65,13 +61,14 @@ class MultiCategoricalMixin:
         # unnormalized log probabilities
         if self._mc_unnormalized_log_prob:
             self._mc_distributions = [
-                Categorical(logits=logits)
+                Categorical(logits=logits, validate_args=False)
                 for logits in torch.split(net_output, self.action_space.nvec.tolist(), dim=-1)
             ]
         # normalized probabilities
         else:
             self._mc_distributions = [
-                Categorical(probs=probs) for probs in torch.split(net_output, self.action_space.nvec.tolist(), dim=-1)
+                Categorical(probs=probs, validate_args=False)
+                for probs in torch.split(net_output, self.action_space.nvec.tolist(), dim=-1)
             ]
 
         # actions
