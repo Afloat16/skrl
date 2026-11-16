@@ -101,6 +101,7 @@ def set_seed(seed: int | None = None, deterministic: bool = False) -> int:
             torch.use_deterministic_algorithms(True)
             logger.warning("PyTorch/cuDNN deterministic algorithms are enabled. This may affect performance")
         else:
+            torch.use_deterministic_algorithms(False)
             torch.backends.cudnn.benchmark = True
             torch.backends.cudnn.deterministic = False
     except ImportError:
