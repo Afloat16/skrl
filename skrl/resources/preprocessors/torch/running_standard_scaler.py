@@ -85,16 +85,17 @@ class RunningStandardScaler(nn.Module):
             else:
                 self._parallel_variance(torch.mean(x, dim=0), torch.var(x, dim=0), x.shape[0])
 
+        # retain double-precision inputs while using at least single precision for statistics
+        dtype = torch.promote_types(x.dtype, torch.float32)
+        mean = self.running_mean.to(dtype=dtype)
+        standard_deviation = torch.sqrt(self.running_variance.to(dtype=dtype))
+
         # scale back the data to the original representation
         if inverse:
-            return (
-                torch.sqrt(self.running_variance.float())
-                * torch.clamp(x, min=-self.clip_threshold, max=self.clip_threshold)
-                + self.running_mean.float()
-            )
+            return standard_deviation * torch.clamp(x, min=-self.clip_threshold, max=self.clip_threshold) + mean
         # standardization by centering and scaling
         return torch.clamp(
-            (x - self.running_mean.float()) / (torch.sqrt(self.running_variance.float()) + self.epsilon),
+            (x - mean) / (standard_deviation + self.epsilon),
             min=-self.clip_threshold,
             max=self.clip_threshold,
         )
