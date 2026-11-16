@@ -188,8 +188,11 @@ class Memory(ABC):
         self.env_index = 0
         self.memory_index = 0
 
+    @torch.no_grad()
     def add_samples(self, **tensors: Tensor) -> None:
         """Add/store samples in memory.
+
+        Samples are copied without retaining their autograd history.
 
         .. important::
 
