@@ -395,6 +395,8 @@ class Model(torch.nn.Module, ABC):
 
         After calling this method, the distributed model parameters will be bitwise identical for all workers/processes.
 
+        Models without gradients require no communication. Workers must agree on which gradients are present.
+
         Example::
 
             # reduce model parameter across all workers/processes
@@ -406,6 +408,8 @@ class Model(torch.nn.Module, ABC):
         for parameters in self.parameters():
             if parameters.grad is not None:
                 gradients.append(parameters.grad.reshape(-1))
+        if not gradients:
+            return
         gradients = torch.cat(gradients)
 
         torch.distributed.all_reduce(gradients, op=torch.distributed.ReduceOp.SUM)
