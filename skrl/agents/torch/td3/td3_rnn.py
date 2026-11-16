@@ -470,7 +470,9 @@ class TD3_RNN(Agent):
 
                 # optimization step (policy)
                 self.policy_optimizer.zero_grad()
-                self.scaler.scale(policy_loss).backward()
+                self.scaler.scale(policy_loss).backward(
+                    inputs=[parameter for parameter in self.policy.parameters() if parameter.requires_grad] or None
+                )
 
                 if config.torch.is_distributed:
                     self.policy.reduce_parameters()
