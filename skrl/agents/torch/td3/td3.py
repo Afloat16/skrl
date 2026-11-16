@@ -416,7 +416,10 @@ class TD3(Agent):
                     self.scaler.unscale_(self.policy_optimizer)
                     nn.utils.clip_grad_norm_(self.policy.parameters(), self.cfg.grad_norm_clip)
 
-                self.scaler.step(self.policy_optimizer)
+                if not self.scaler.is_enabled() or any(
+                    parameter.grad is not None for parameter in self.policy.parameters()
+                ):
+                    self.scaler.step(self.policy_optimizer)
 
                 # update target networks
                 self.target_critic_1.update_parameters(self.critic_1, polyak=self.cfg.polyak)

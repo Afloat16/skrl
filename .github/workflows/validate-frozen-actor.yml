@@ -1,0 +1,80 @@
+name: Validate frozen actor training
+
+on:
+  push:
+    branches:
+      - validation/frozen-actor-training-20261116
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install CPU dependencies
+        run: |
+          python -m pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --no-cache-dir -e . numpy==1.26.4 pytest==8.3.5 hypothesis==6.130.4 gymnasium==1.4.0 pyyaml black==24.8.0 isort==5.13.2
+      - name: Verify unchanged source fails at the intended errors
+        run: |
+          for file in skrl/agents/torch/ddpg/ddpg.py skrl/agents/torch/ddpg/ddpg_rnn.py skrl/agents/torch/sac/sac.py skrl/agents/torch/sac/sac_rnn.py skrl/agents/torch/td3/td3.py skrl/agents/torch/td3/td3_rnn.py skrl/models/torch/base.py; do
+            git show c0ad68a1e3feb4d288570db87403648074cabdb7:"$file" > "$file"
+          done
+          set +e
+          python -m pytest tests/agents/torch/test_frozen_actor.py tests/utils/distributed/torch/test_frozen_actor.py -q --tb=short --junitxml=baseline.xml > baseline.log 2>&1
+          result=$?
+          set -e
+          git restore --source=HEAD --worktree -- skrl/agents/torch/ddpg/ddpg.py skrl/agents/torch/ddpg/ddpg_rnn.py skrl/agents/torch/sac/sac.py skrl/agents/torch/sac/sac_rnn.py skrl/agents/torch/td3/td3.py skrl/agents/torch/td3/td3_rnn.py skrl/models/torch/base.py
+          cat baseline.log
+          test "$result" -eq 1
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          suite = ET.parse("baseline.xml").getroot().find("testsuite")
+          assert suite.get("tests") == "45", suite.attrib
+          assert suite.get("failures") == "21", suite.attrib
+          assert suite.get("errors") == "0", suite.attrib
+          assert suite.get("skipped") == "0", suite.attrib
+          for failure in suite.iter("failure"):
+              assert "No inf checks were recorded" in failure.text or "expected a non-empty list of Tensors" in failure.text, failure.text
+          PY
+      - name: Validate frozen updates and original agent coverage
+        if: always()
+        run: |
+          python -m pytest tests/agents/torch/test_frozen_actor.py tests/utils/distributed/torch/test_frozen_actor.py tests/utils/distributed/torch/test_gradient_reduction.py tests/agents/torch/test_ddpg.py tests/agents/torch/test_sac.py tests/agents/torch/test_td3.py -q --tb=short --hypothesis-seed=0 --junitxml=fixed.xml > fixed.log 2>&1
+          cat fixed.log
+          python -m black --check skrl/agents/torch/ddpg/ddpg.py skrl/agents/torch/sac/sac_rnn.py skrl/models/torch/base.py skrl/agents/torch/ddpg/ddpg_rnn.py skrl/agents/torch/td3/td3.py tests/agents/torch/test_frozen_actor.py skrl/agents/torch/sac/sac.py skrl/agents/torch/td3/td3_rnn.py tests/utils/distributed/torch/test_frozen_actor.py
+          python -m isort --check-only skrl/agents/torch/ddpg/ddpg.py skrl/agents/torch/sac/sac_rnn.py skrl/models/torch/base.py skrl/agents/torch/ddpg/ddpg_rnn.py skrl/agents/torch/td3/td3.py tests/agents/torch/test_frozen_actor.py skrl/agents/torch/sac/sac.py skrl/agents/torch/td3/td3_rnn.py tests/utils/distributed/torch/test_frozen_actor.py
+          git diff --check
+      - name: Print test evidence
+        if: always()
+        run: |
+          if test -f fixed.log; then tail -n 100 fixed.log; fi
+          python - <<'PY'
+          import json, pathlib, xml.etree.ElementTree as ET
+          for path in ["baseline.xml", "fixed.xml"]:
+              if pathlib.Path(path).exists():
+                  print(path, json.dumps([s.attrib for s in ET.parse(path).getroot()]))
+          PY
+      - name: Save exact validation output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-actor-validation
+          path: |
+            baseline.log
+            baseline.xml
+            fixed.log
+            fixed.xml
+          retention-days: 7

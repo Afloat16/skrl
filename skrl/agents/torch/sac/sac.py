@@ -392,7 +392,10 @@ class SAC(Agent):
                 self.scaler.unscale_(self.policy_optimizer)
                 nn.utils.clip_grad_norm_(self.policy.parameters(), self.cfg.grad_norm_clip)
 
-            self.scaler.step(self.policy_optimizer)
+            if not self.scaler.is_enabled() or any(
+                parameter.grad is not None for parameter in self.policy.parameters()
+            ):
+                self.scaler.step(self.policy_optimizer)
 
             # entropy learning
             if self.cfg.learn_entropy:
